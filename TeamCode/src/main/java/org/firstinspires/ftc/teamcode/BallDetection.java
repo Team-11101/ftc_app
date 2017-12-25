@@ -5,6 +5,7 @@ package org.firstinspires.ftc.teamcode;
  */
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.robotcore.external.navigation.*;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CloseableFrame;
@@ -16,7 +17,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import java.nio.ByteBuffer;
 import android.graphics.Color;
-
+@Disabled
 @TeleOp(name="BallGay", group="Pushbot")
 public class BallDetection extends LinearOpMode {
 
@@ -95,13 +96,59 @@ public class BallDetection extends LinearOpMode {
         width /= coarseness;
         height /= coarseness;
 
+        int maxConsecNotBlue = 5;
+
+        int maxRadius = -1;
+        int maxX = -1, maxY = -1;
+
         for (int i = 0; i < width; i++) {
-            String p = "";
             for (int j = 0; j < height; j++) {
-                p = p + (pixels[i][j] ? "#" : "_");
+                int leftnBlue = 0, downnBlue = 0, rightnBlue = 0, upnBlue = 0;
+
+                if (pixels[i][j]) {
+                    int dev;
+                    for (dev = 1; dev < width; dev++) {
+                        if (i - dev >= 0 && !pixels[i - dev][j]) {
+                            leftnBlue++;
+                            if (leftnBlue > maxConsecNotBlue) break;
+                        } else {
+                            leftnBlue = 0;
+                        }
+
+                        if (i + dev < width && !pixels[i + dev][j]) {
+                            rightnBlue++;
+                            if (rightnBlue > maxConsecNotBlue) break;
+                        } else {
+                            rightnBlue = 0;
+                        }
+
+                        if (j - dev >= 0 && !pixels[i][j - dev]) {
+                            upnBlue++;
+                            if (upnBlue > maxConsecNotBlue) break;
+                        } else {
+                            upnBlue = 0;
+                        }
+
+                        if (j + dev < height && !pixels[i][j + dev]) {
+                            downnBlue++;
+                            if (downnBlue > maxConsecNotBlue) break;
+                        } else {
+                            downnBlue = 0;
+                        }
+                    }
+
+                    if (dev > maxRadius) {
+                        maxRadius = dev;
+                        maxX = i;
+                        maxY = j;
+                    }
+                }
             }
-            telemetry.addData("",p);
         }
+
+        telemetry.addData("MaxX", maxX);
+        telemetry.addData("MaxY", maxY);
+        telemetry.addData("MaxRadius", maxRadius);
     }
 
     @Override

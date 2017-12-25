@@ -29,7 +29,6 @@ public class HardwareDRive
     public DcMotor BLMotor  = null;
     public DcMotor BRMotor  = null;
     public DcMotor SideMotor   = null;
-    public DcMotor GreenMotor   = null;
     public Servo armleft = null;
     public Servo clawleft = null;
     public Servo clawright = null;
