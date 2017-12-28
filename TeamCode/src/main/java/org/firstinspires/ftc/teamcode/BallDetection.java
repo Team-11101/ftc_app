@@ -17,7 +17,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import java.nio.ByteBuffer;
 import android.graphics.Color;
-@Disabled
+//@Disabled
 @TeleOp(name="BallGay", group="Pushbot")
 public class BallDetection extends LinearOpMode {
 

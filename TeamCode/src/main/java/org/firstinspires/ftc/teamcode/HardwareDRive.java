@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -61,8 +62,7 @@ public class HardwareDRive
 
         //BlueMotor   = hwMap.dcMotor.get("Blue");
         //GreenMotor   = hwMap.dcMotor.get("Green");
-        FLMotor.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
-        BLMotor.setDirection(DcMotor.Direction.REVERSE);// Set to FORWARD if using AndyMark motors
+
 
         // Set all motors to zero power
         FLMotor.setPower(0);
@@ -83,6 +83,11 @@ public class HardwareDRive
         BRMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         //GreenMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         //BlueMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        FLMotor.setDirection(DcMotor.Direction.REVERSE);
+        BLMotor.setDirection(DcMotor.Direction.REVERSE);
+
+        BRMotor.setDirection(DcMotor.Direction.REVERSE);
 
     }
 
