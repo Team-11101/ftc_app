@@ -3,13 +3,13 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import java.util.Date;
-import java.util.Hashtable;
+
 import java.util.Enumeration;
+import java.util.Hashtable;
 
 //@Disabled
 @TeleOp(name="TimDrive", group="Pushbot")
-public class TimDrive extends LinearOpMode {
+public class TimDriveClone extends LinearOpMode {
 
     /* Declare OpMode members. */
     HardwareDRive robot = new HardwareDRive();   // Use a Pushbot's hardware

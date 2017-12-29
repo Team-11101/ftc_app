@@ -87,8 +87,6 @@ public class HardwareDRive
         FLMotor.setDirection(DcMotor.Direction.REVERSE);
         BLMotor.setDirection(DcMotor.Direction.REVERSE);
 
-        BRMotor.setDirection(DcMotor.Direction.REVERSE);
-
     }
 
     /***
