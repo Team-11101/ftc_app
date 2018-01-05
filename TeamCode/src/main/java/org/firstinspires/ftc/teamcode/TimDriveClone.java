@@ -8,7 +8,7 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 
 //@Disabled
-@TeleOp(name="TimDrive", group="Pushbot")
+@TeleOp(name="TimDriveClone", group="Pushbot")
 public class TimDriveClone extends LinearOpMode {
 
     /* Declare OpMode members. */
