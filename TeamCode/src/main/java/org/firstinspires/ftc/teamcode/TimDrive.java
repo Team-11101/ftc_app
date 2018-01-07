@@ -127,12 +127,12 @@ public class TimDrive extends LinearOpMode {
     }
 
     public void moveDirection(double x, double y) {
-        robot.BLMotor.setPower(y);
+        robot.BLMotor.setPower(-y);
         robot.FLMotor.setPower(y);
         robot.FRMotor.setPower(y);
         robot.BRMotor.setPower(-y);
 
-        robot.SideMotor.setPower(x);
+        robot.SideMotor.setPower(-x);
     }
 
     public void moveCardinalDirection(double x, double y) {
@@ -146,7 +146,7 @@ public class TimDrive extends LinearOpMode {
     public void updateArm() {
         if (gamepad2.right_stick_y != 0) {
             double armPower = gamepad2.right_stick_y * settings.get("arm-modifier") / 100;
-            robot.arm.setPower(armPower);
+            robot.arm.setPower(-armPower);
         } else {
             robot.arm.setPower(0);
         }

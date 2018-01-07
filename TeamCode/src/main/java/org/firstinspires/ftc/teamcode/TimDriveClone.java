@@ -3,9 +3,9 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-
-import java.util.Enumeration;
+import java.util.Date;
 import java.util.Hashtable;
+import java.util.Enumeration;
 
 //@Disabled
 @TeleOp(name="TimDriveClone", group="Pushbot")
@@ -127,12 +127,12 @@ public class TimDriveClone extends LinearOpMode {
     }
 
     public void moveDirection(double x, double y) {
-        robot.BLMotor.setPower(y);
+        robot.BLMotor.setPower(-y);
         robot.FLMotor.setPower(y);
         robot.FRMotor.setPower(y);
         robot.BRMotor.setPower(-y);
 
-        robot.SideMotor.setPower(x);
+        robot.SideMotor.setPower(-x);
     }
 
     public void moveCardinalDirection(double x, double y) {
@@ -146,7 +146,7 @@ public class TimDriveClone extends LinearOpMode {
     public void updateArm() {
         if (gamepad2.right_stick_y != 0) {
             double armPower = gamepad2.right_stick_y * settings.get("arm-modifier") / 100;
-            robot.arm.setPower(armPower);
+            robot.arm.setPower(-armPower);
         } else {
             robot.arm.setPower(0);
         }
@@ -226,6 +226,7 @@ public class TimDriveClone extends LinearOpMode {
     }
 
     public void settingsTelemetry() {
+        telemetry.addData("Gay", 3);
         telemetry.addData("Claw Position: ",
                 (settings.get("claw") == Toggle.Inactive) ? "Open" : "Closed");
         telemetry.addData("Cardinal Movement Lock: ",
@@ -245,7 +246,7 @@ public class TimDriveClone extends LinearOpMode {
         boolean lastRightBumper = false;
 
         while (opModeIsActive()) {
-            if (gamepad1.right_bumper && !lastRightBumper && timings.get("smod").needsUpdate()) {
+            /*if (gamepad1.right_bumper && !lastRightBumper && timings.get("smod").needsUpdate()) {
                 timings.get("smod").markUpdated();
 
                 if (settings.get("s-modifier") == Toggle.Inactive) {
@@ -294,7 +295,10 @@ public class TimDriveClone extends LinearOpMode {
             }
             if (gamepad1.y){
                 robot.armleft.setPosition(0.9);
-            }
+            }*/
+
+            telemetry.addData("I was on my porch holding my beer", "udder");
+            telemetry.update();
         }
 
     }

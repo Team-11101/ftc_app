@@ -17,6 +17,9 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import java.nio.ByteBuffer;
 import android.graphics.Color;
+import java.util.Hashtable;
+import java.util.Enumeration;
+
 //@Disabled
 @TeleOp(name="BallGay", group="Pushbot")
 public class BallDetection extends LinearOpMode {
@@ -68,14 +71,18 @@ public class BallDetection extends LinearOpMode {
     }
 
     private boolean isBlue(float[] pix) {
-        return (Math.abs((pix[0] / 256.) - .59091) < 0.3);
+        return (Math.abs((pix[0] / 256.) - .59091) < 0.3) && (pix[1] > 0.7) && (pix[2] > 0.3);
     }
 
-    private void processBitmap(Bitmap bm) {
+    private boolean isRed(float[] pix) {
+        return (Math.abs((pix[0] / 256.) - 1.32) < 0.21) && (pix[1] > 0.6) && (pix[2] > 0.4);
+    }
+
+    private void processBlueBitmap(Bitmap bm, int[] ballPos) {
         int width = bm.getWidth();
         int height = bm.getHeight();
 
-        int coarseness = 31;
+        int coarseness = 4;
         int pixelCount = 0;
         float[] pix = {0, 0, 0};
 
@@ -146,10 +153,92 @@ public class BallDetection extends LinearOpMode {
             }
         }
 
-        telemetry.addData("MaxX", maxX);
-        telemetry.addData("MaxY", maxY);
-        telemetry.addData("MaxRadius", maxRadius);
+        ballPos[0] = maxX;
+        ballPos[1] = maxY;
+        ballPos[2] = maxRadius - maxConsecNotBlue;
     }
+
+    private void processRedBitmap(Bitmap bm, int[] ballPos) {
+        int width = bm.getWidth();
+        int height = bm.getHeight();
+
+        int coarseness = 4;
+        int pixelCount = 0;
+        float[] pix = {0, 0, 0};
+
+        boolean[][] pixels = new boolean[width / coarseness + 1][height / coarseness + 1];
+
+        for (int i = 0; i < width; i += coarseness) {
+            for (int j = 0; j < height; j += coarseness) {
+                Color.colorToHSV(bm.getPixel(i, j), pix);
+                // pix[0] = H, pix[1] = S, pix[2] = V
+
+                pixels[i / coarseness][j / coarseness] = isRed(pix);
+                pixelCount += 1;
+            }
+        }
+
+        telemetry.addData("PixCount",pixelCount);
+
+        width /= coarseness;
+        height /= coarseness;
+
+        int maxConsecNotBlue = 5;
+
+        int maxRadius = -1;
+        int maxX = -1, maxY = -1;
+
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++) {
+                int leftnBlue = 0, downnBlue = 0, rightnBlue = 0, upnBlue = 0;
+
+                if (pixels[i][j]) {
+                    int dev;
+                    for (dev = 1; dev < width; dev++) {
+                        if (i - dev >= 0 && !pixels[i - dev][j]) {
+                            leftnBlue++;
+                            if (leftnBlue > maxConsecNotBlue) break;
+                        } else {
+                            leftnBlue = 0;
+                        }
+
+                        if (i + dev < width && !pixels[i + dev][j]) {
+                            rightnBlue++;
+                            if (rightnBlue > maxConsecNotBlue) break;
+                        } else {
+                            rightnBlue = 0;
+                        }
+
+                        if (j - dev >= 0 && !pixels[i][j - dev]) {
+                            upnBlue++;
+                            if (upnBlue > maxConsecNotBlue) break;
+                        } else {
+                            upnBlue = 0;
+                        }
+
+                        if (j + dev < height && !pixels[i][j + dev]) {
+                            downnBlue++;
+                            if (downnBlue > maxConsecNotBlue) break;
+                        } else {
+                            downnBlue = 0;
+                        }
+                    }
+
+                    if (dev > maxRadius) {
+                        maxRadius = dev;
+                        maxX = i;
+                        maxY = j;
+                    }
+                }
+            }
+        }
+
+        ballPos[0] = maxX;
+        ballPos[1] = maxY;
+        ballPos[2] = maxRadius - maxConsecNotBlue;
+    }
+
+
 
     @Override
     public void runOpMode() {
@@ -230,8 +319,28 @@ public class BallDetection extends LinearOpMode {
                     height = b.getHeight();
 
                     int pixel = b.getPixel(x1, y1);
+                    int[] bluePos = new int[3];
+                    int[] redPos = new int[3];
 
-                    processBitmap(b);
+                    processBlueBitmap(b, bluePos);
+                    processRedBitmap(b, redPos);
+
+                    if (redPos[2] > 5) {
+                        telemetry.addData("Red Size", redPos[2]);
+                        if (bluePos[2] > 5) {
+                            telemetry.addData("Blue Size", bluePos[2]);
+
+                            if (redPos[0] > bluePos[0]) {
+                                telemetry.addData("","Red on left, blue on right");
+                            } else {
+                                telemetry.addData("","Red on right, blue on left");
+                            }
+                        }
+                    } else {
+                        if (bluePos[2] > 5) {
+                            telemetry.addData("Blue Size", bluePos[2]);
+                        }
+                    }
 
                     float[] pix = new float[3];
                     Color.colorToHSV(pixel, pix);
@@ -239,6 +348,8 @@ public class BallDetection extends LinearOpMode {
                     telemetry.addData("HSV", pix[0]);
                     telemetry.addData("HSV", pix[1]);
                     telemetry.addData("HSV", pix[2]);
+
+                    telemetry.addData("isRed", isRed(pix));
 
                     // Bottom right
 
