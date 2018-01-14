@@ -126,11 +126,12 @@ public class TimDrive extends LinearOpMode {
         robot.clawright.setPosition(clawClosedPosition);
     }
 
+
     public void moveDirection(double x, double y) {
         robot.BLMotor.setPower(-y);
-        robot.FLMotor.setPower(y);
-        robot.FRMotor.setPower(y);
-        robot.BRMotor.setPower(-y);
+        robot.FLMotor.setPower(-y);
+        robot.FRMotor.setPower(-y);
+        robot.BRMotor.setPower(y);
 
         robot.SideMotor.setPower(-x);
     }
@@ -197,9 +198,9 @@ public class TimDrive extends LinearOpMode {
     public void rotate(double magnitude) {
         if (Math.abs(magnitude) > 1) return;
 
-        robot.BLMotor.setPower(-magnitude);
-        robot.FLMotor.setPower(-magnitude);
-        robot.FRMotor.setPower(magnitude);
+        robot.BLMotor.setPower(magnitude);
+        robot.FLMotor.setPower(magnitude);
+        robot.FRMotor.setPower(-magnitude);
         robot.BRMotor.setPower(magnitude);
 
         robot.SideMotor.setPower(0);
@@ -231,6 +232,7 @@ public class TimDrive extends LinearOpMode {
         telemetry.addData("Cardinal Movement Lock: ",
                 ((settings.get("lock-modifier") == Toggle.Inactive) ? "Off" : "On"));
         telemetry.addData("Speed Modifier: ", settings.get("speed-modifier") + "%");
+        telemetry.addData("nicolas is", "Gay whithh dhriti");
         telemetry.update();
     }
 
@@ -287,7 +289,7 @@ public class TimDrive extends LinearOpMode {
             lastRightBumper = gamepad1.right_bumper;
 
             if (gamepad1.a){
-                robot.armleft.setPosition(0);
+                robot.armleft.setPosition(0); //connect to port 1 on servo controller
             }
             if (gamepad1.b){
                 robot.armleft.setPosition(0.75);

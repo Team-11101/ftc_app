@@ -4,6 +4,8 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.TouchSensor;
+import com.qualcomm.robotcore.hardware.UltrasonicSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
@@ -26,6 +28,9 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 public class Red1Auto extends LinearOpMode {
 
     HardwareDRive         robot   = new HardwareDRive();   // Use a Pushbot's hardware
+    TouchSensor touchSensor;  // Hardware Device Object
+    UltrasonicSensor ultra;  // Hardware Device Object
+
     private ElapsedTime runtime = new ElapsedTime();
 
     static final double     COUNTS_PER_MOTOR_REV    = 1440 ;    // eg: TETRIX Motor Encoder
@@ -54,7 +59,9 @@ public class Red1Auto extends LinearOpMode {
          * To start up Vuforia, tell it the view that we wish to use for camera monitor (on the RC phone);
          * If no camera monyitor is dyesired, yuse the parameterless constructor instead (commented out below).
          */
-
+        touchSensor = hardwareMap.get(TouchSensor.class, "touch_sensor");
+        ultra = hardwareMap.ultrasonicSensor.get("ultra");
+        int counter = 0;
         robot.init(hardwareMap);
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
@@ -94,6 +101,7 @@ public class Red1Auto extends LinearOpMode {
         waitForStart();
 
         relicTrackables.activate();
+        double vis = 0; //for the ultrasonic
 
         while (opModeIsActive()) {
 
@@ -134,80 +142,31 @@ public class Red1Auto extends LinearOpMode {
                     double rZ = rot.thirdAngle;
                 }
 
-//close the claw first thing after start
-                robot.clawleft.setPosition(0.5);
-                robot.clawright.setPosition(0);
-                //actual auto start
-                robot.arm.setPower(-0.2);
-                sleep(500);
-                robot.arm.setPower(0);
+//start of robot movements
+                robot.FLMotor.setPower(0.2);
+                robot.FRMotor.setPower(0.1);
+                robot.BLMotor.setPower(0.2);
+                robot.BRMotor.setPower(-0.1);
+
+                while (!touchSensor.isPressed()) {
+                    vis = ultra.getUltrasonicLevel() - 12;
+                    robot.SideMotor.setPower(-(vis/10));
+                }
+
+
+
 
                 if (vuMark == RelicRecoveryVuMark.LEFT){
-                    encoderDrive(0.5,17.1,17.1,5);
-                    encoderDrive(0.5, -7.8, 7.8, 5);
-                    robot.SideMotor.setPower(-0.5);
-                    sleep(1130);
-                    robot.SideMotor.setPower(0);
-                    encoderDrive(0.5,10,10,1);
-                    //open claw
-                    robot.clawleft.setPosition(0);
-                    robot.clawright.setPosition(0.5);
-                    sleep(300);
-                    encoderDrive(0.2,-5,-5,2);
-                    robot.clawleft.setPosition(0.5);
-                    robot.clawright.setPosition(0);
-                    encoderDrive(1,10,10,2);
-                    //drive back
-                /*
-                encoderDrive(0.5, -8, -8, 5);
-                encoderDrive(0.5, 16.6, -16.6, 10);
-                */
+
+
                     break;
                 }
                 if (vuMark == RelicRecoveryVuMark.CENTER){
-                    encoderDrive(0.5,17.15,17.15,5);
-                    encoderDrive(0.5, -8.3, 8.3, 5);
-                    robot.SideMotor.setPower(-0.5);
-                    sleep(900);
-                    robot.SideMotor.setPower(0);
-                    encoderDrive(0.5,10,10,1);
-                    //open claw
-                    robot.clawleft.setPosition(0);
-                    robot.clawright.setPosition(0.5);
-                    encoderDrive(0.2,-5,-5,2);
-                    robot.clawleft.setPosition(0.5);
-                    robot.clawright.setPosition(0);
-                    encoderDrive(1,10,10,2);
-                    //drive back
-                /*
-                sleep(300);
-                encoderDrive(0.5, -8, -8, 5);
-                encoderDrive(0.5, 16.6, -16.6, 10);
-                */
+
                     break;
                 }
                 if (vuMark == RelicRecoveryVuMark.RIGHT){
-                    encoderDrive(0.5,17.1,17.1,5);
-                    encoderDrive(0.5, -8.3, 8.3, 5);
-                    robot.SideMotor.setPower(-0.5);
-                    sleep(250);
-                    robot.SideMotor.setPower(0);
-                    encoderDrive(0.5,10,10,1);
-                    robot.clawleft.setPosition(0);
-                    robot.clawright.setPosition(0.5);
-                    encoderDrive(0.2,-5,-5,2);
-                    robot.clawleft.setPosition(0.5);
-                    robot.clawright.setPosition(0);
-                    encoderDrive(1,10,10,2);
-                    //open claw
-                    sleep(300);
-                /*
-                robot.clawleft.setPosition(0);
-                robot.clawright.setPosition(0.5);
-                //drive back
-                encoderDrive(0.5, -8, -8, 5);
-                encoderDrive(0.5, 16.6, -16.6, 10);
-                */
+
                     break;
                 }
 

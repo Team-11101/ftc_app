@@ -42,9 +42,9 @@ import com.qualcomm.robotcore.hardware.TouchSensor;
  * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
-@TeleOp(name = "Sensor: LEGO touch", group = "Sensor")
+@TeleOp(name = "LEGO Touch", group = "Sensor")
 //@Disabled
-public class SensorLEGOTouch extends LinearOpMode {
+public class SensorLEGOTouch1 extends LinearOpMode {
 
   TouchSensor touchSensor;  // Hardware Device Object
 
@@ -63,11 +63,14 @@ public class SensorLEGOTouch extends LinearOpMode {
     while (opModeIsActive()) {
 
       // send the info back to driver station using telemetry function.
-      if (touchSensor.isPressed())
+      if (touchSensor.isPressed()) {
         telemetry.addData("Touch", "Is Pressed");
+        counter = counter  + 1;
+        sleep(1000);
+        telemetry.addData("Count:", counter)   ;}
       else
         telemetry.addData("Touch", "Is Not Pressed");
-
+        telemetry.addData("Count:", counter)   ;
       telemetry.update();
     }
   }
