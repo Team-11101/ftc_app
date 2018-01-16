@@ -114,7 +114,7 @@ public class TimDrive extends LinearOpMode {
     }
 
     double clawClosedPosition = 0;
-    double clawOpenPosition = 0.5;
+    double clawOpenPosition = 0.4;
 
     public void openClaw() {
         robot.clawleft.setPosition(clawClosedPosition);
@@ -125,6 +125,12 @@ public class TimDrive extends LinearOpMode {
         robot.clawleft.setPosition(clawOpenPosition);
         robot.clawright.setPosition(clawClosedPosition);
     }
+
+    public void intermediateClaw() {
+        robot.clawleft.setPosition((clawOpenPosition + clawClosedPosition) / 2);
+        robot.clawright.setPosition((clawOpenPosition + clawClosedPosition) / 2);
+    }
+
 
 
     public void moveDirection(double x, double y) {
@@ -145,9 +151,9 @@ public class TimDrive extends LinearOpMode {
     }
 
     public void updateArm() {
-        if (gamepad2.right_stick_y != 0) {
-            double armPower = gamepad2.right_stick_y * settings.get("arm-modifier") / 100;
-            robot.arm.setPower(-armPower);
+        if (gamepad2.left_stick_y != 0) {
+            double armPower = gamepad2.left_stick_y * settings.get("arm-modifier") / 100;
+            robot.arm.setPower(armPower);
         } else {
             robot.arm.setPower(0);
         }
@@ -188,6 +194,13 @@ public class TimDrive extends LinearOpMode {
 
                 settings.set("claw", Toggle.Inactive);
             }
+        }
+
+        if (gamepad2.b && timings.get("claw").needsUpdate()) {
+            timings.get("claw").markUpdated();
+            settings.set("claw", Toggle.Active);
+
+            intermediateClaw();
         }
     }
 

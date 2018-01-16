@@ -103,6 +103,9 @@ public class Red1Auto extends LinearOpMode {
         relicTrackables.activate();
         double vis = 0; //for the ultrasonic
 
+        boolean lastPressed = false;
+        int pressCount = 0;
+
         while (opModeIsActive()) {
 
             /**
@@ -143,14 +146,21 @@ public class Red1Auto extends LinearOpMode {
                 }
 
 //start of robot movements
-                robot.FLMotor.setPower(0.2);
-                robot.FRMotor.setPower(0.1);
-                robot.BLMotor.setPower(0.2);
-                robot.BRMotor.setPower(-0.1);
+
+                if (touchSensor.isPressed() && !lastPressed) {
+                    pressCount++;
+                }
+                lastPressed = touchSensor.isPressed();
 
                 while (!touchSensor.isPressed()) {
                     vis = ultra.getUltrasonicLevel() - 12;
-                    robot.SideMotor.setPower(-(vis/10));
+                    double def = -vis / 15;
+                    // robot.SideMotor.setPower(-(vis/10));
+
+                    robot.FLMotor.setPower(0.2 + def);
+                    robot.FRMotor.setPower(0.1 - def);
+                    robot.BLMotor.setPower(0.2 + def);
+                    robot.BRMotor.setPower(-0.1 - def);
                 }
 
 
