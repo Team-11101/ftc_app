@@ -44,6 +44,7 @@ public class Red2Auto extends LinearOpMode {
             (WHEEL_DIAMETER_INCHES * 3.1415);
 
     int Dis=700;
+    double vis=0;
 
     public static final String TAG = "Vuforia VuMark Sample";
 
@@ -295,7 +296,7 @@ public class Red2Auto extends LinearOpMode {
                 telemetry.addData("Blue Height", bluePos[0]);
                 telemetry.addData("totH", width / 4 * 0.35);
 
-                return (bluePos[0] > 135);
+                return (bluePos[0] > 88);
             }
         }
 
@@ -435,13 +436,21 @@ public class Red2Auto extends LinearOpMode {
 
 
                 if (vuMark == RelicRecoveryVuMark.RIGHT){
-                    encoderDrive(0.5, 24, 24, 0);
-                    double vis = ultra.getUltrasonicLevel() - 12;
-                    while (vis > 0) {
+                    encoderDrive(0.5, 100, 100, 5);
+                    sleep(100);
+                    while (!touchSensor.isPressed())
+                    {
+                        vis = ultra.getUltrasonicLevel() - 12;
+                        robot.SideMotor.setPower(vis/10);
+                        if (touchSensor.isPressed()){
+                            robot.SideMotor.setPower(0);
+                        }
+                    }
+                    /*while (vis > 0) {
                         robot.SideMotor.setPower(-(vis/10));
                     }
                     robot.SideMotor.setPower(0);
-                    break;
+                    break;*/
                 }
                 if (vuMark == RelicRecoveryVuMark.CENTER){
 
@@ -497,9 +506,9 @@ public class Red2Auto extends LinearOpMode {
 
             // reset the timeout time and start motion.
             runtime.reset();
-            robot.FLMotor.setPower(Math.abs(speed));
+            robot.FLMotor.setPower(Math.abs(-speed));
             robot.FRMotor.setPower(Math.abs(speed*0.7));
-            robot.BLMotor.setPower(Math.abs(speed));
+            robot.BLMotor.setPower(Math.abs(-speed));
             robot.BRMotor.setPower(Math.abs(speed*0.7));
 
             // keep looping while we are still active, and there is time left, and both motors are running.
