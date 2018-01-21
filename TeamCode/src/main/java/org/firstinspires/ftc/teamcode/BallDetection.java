@@ -75,14 +75,14 @@ public class BallDetection extends LinearOpMode {
     }
 
     private boolean isRed(float[] pix) {
-        return (Math.abs((pix[0] / 256.) - 1.32) < 0.21) && (pix[1] > 0.6) && (pix[2] > 0.4);
+        return (Math.abs((pix[0] / 256.) - 1.32) < 0.5) && (pix[1] > 0.5) && (pix[2] > 0.2);
     }
 
     private void processBlueBitmap(Bitmap bm, int[] ballPos) {
         int width = bm.getWidth();
         int height = bm.getHeight();
 
-        int coarseness = 4;
+        int coarseness = 2;
         int pixelCount = 0;
         float[] pix = {0, 0, 0};
 
@@ -103,7 +103,7 @@ public class BallDetection extends LinearOpMode {
         width /= coarseness;
         height /= coarseness;
 
-        int maxConsecNotBlue = 5;
+        int maxConsecNotBlue = 20;
 
         int maxRadius = -1;
         int maxX = -1, maxY = -1;
@@ -162,7 +162,7 @@ public class BallDetection extends LinearOpMode {
         int width = bm.getWidth();
         int height = bm.getHeight();
 
-        int coarseness = 4;
+        int coarseness = 2;
         int pixelCount = 0;
         float[] pix = {0, 0, 0};
 
@@ -183,7 +183,7 @@ public class BallDetection extends LinearOpMode {
         width /= coarseness;
         height /= coarseness;
 
-        int maxConsecNotBlue = 5;
+        int maxConsecNotBlue = 20;
 
         int maxRadius = -1;
         int maxX = -1, maxY = -1;
@@ -270,34 +270,6 @@ public class BallDetection extends LinearOpMode {
             int width = 0, height = 0;
 
             if (time > lastPictureTime + pictureDelta) {
-                if (gamepad1.dpad_down) {
-                    y1 += 1;
-                    if (y1 >= height) {
-                        y1 -= 1;
-                    }
-                }
-
-                if (gamepad1.dpad_up) {
-                    y1 -= 1;
-                    if (y1 < 0) {
-                        y1 += 1;
-                    }
-                }
-
-                if (gamepad1.dpad_right) {
-                    x1 += 1;
-                    if (x1 >= width) {
-                        x1 -= 1;
-                    }
-                }
-
-                if (gamepad1.dpad_left) {
-                    x1 -= 1;
-                    if (x1 >= width) {
-                        x1 += 1;
-                    }
-                }
-
                 lastPictureTime = time;
                 Image k = getPicture();
 
@@ -330,7 +302,7 @@ public class BallDetection extends LinearOpMode {
                         if (bluePos[2] > 5) {
                             telemetry.addData("Blue Size", bluePos[2]);
 
-                            if (redPos[0] > bluePos[0]) {
+                            if (redPos[1] > bluePos[1]) {
                                 telemetry.addData("","Red on left, blue on right");
                             } else {
                                 telemetry.addData("","Red on right, blue on left");

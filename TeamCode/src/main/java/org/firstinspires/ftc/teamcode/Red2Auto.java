@@ -1,10 +1,18 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import android.graphics.Bitmap;
+import android.graphics.Color;
+
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.TouchSensor;
+import com.qualcomm.robotcore.hardware.UltrasonicSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.vuforia.Image;
+import com.vuforia.PIXEL_FORMAT;
+import com.vuforia.Vuforia;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
@@ -19,6 +27,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 
+import java.nio.ByteBuffer;
 
 
 @Autonomous(name="Red2Auto", group ="Pushbot")
@@ -38,6 +47,8 @@ public class Red2Auto extends LinearOpMode {
 
     public static final String TAG = "Vuforia VuMark Sample";
 
+    static final boolean knockRed = false;
+
     OpenGLMatrix lastLocation = null;
 
     public static RelicRecoveryVuMark vuMark = null;
@@ -48,12 +59,260 @@ public class Red2Auto extends LinearOpMode {
      */
     VuforiaLocalizer vuforia;
 
+    private Image getPicture() {
+
+        Vuforia.setFrameFormat(PIXEL_FORMAT.RGB565, true); //enables RGB565 format for the image
+        vuforia.setFrameQueueCapacity(1);
+
+        VuforiaLocalizer.CloseableFrame frame; //takes the frame at the head of the queue
+        try {
+            frame = vuforia.getFrameQueue().take();
+        } catch (InterruptedException e) {
+            telemetry.addData("e",e.getMessage());
+            return null;
+        }
+
+        Image rgb = null;
+
+        long numImages = frame.getNumImages();
+
+        for (int i = 0; i < numImages; i++) {
+            if (frame.getImage(i).getFormat() == PIXEL_FORMAT.RGB565) {
+                rgb = frame.getImage(i);
+                break;
+            }
+        }
+
+        return rgb;
+    }
+
+    private boolean isBlue(float[] pix) {
+        return (Math.abs((pix[0] / 256.) - .59091) < 0.3) && (pix[1] > 0.7) && (pix[2] > 0.3);
+    }
+    private boolean isRed(float[] pix) {
+        return (Math.abs((pix[0] / 256.) - 1.32) < 0.4) && (pix[1] > 0.6) && (pix[2] > 0.2);
+    }
+
+    private void setCameraDirection(double angle) {
+        robot.udd.setPosition(angle / 360.0);
+    }
+
+    private void processBlueBitmap(Bitmap bm, int[] ballPos) {
+        int width = bm.getWidth();
+        int height = bm.getHeight();
+
+        int coarseness = 4;
+        int pixelCount = 0;
+        float[] pix = {0, 0, 0};
+
+        boolean[][] pixels = new boolean[width / coarseness + 1][height / coarseness + 1];
+
+        for (int i = 0; i < width; i += coarseness) {
+            for (int j = 0; j < height; j += coarseness) {
+                Color.colorToHSV(bm.getPixel(i, j), pix);
+                // pix[0] = H, pix[1] = S, pix[2] = V
+
+                pixels[i / coarseness][j / coarseness] = isBlue(pix);
+                pixelCount += 1;
+            }
+        }
+
+        telemetry.addData("PixCount",pixelCount);
+
+        width /= coarseness;
+        height /= coarseness;
+
+        int maxConsecNotBlue = 5;
+
+        int maxRadius = -1;
+        int maxX = -1, maxY = -1;
+
+        for (int i = 0; i < width; i += 2) {
+            for (int j = 0; j < height; j += 2) {
+                int leftnBlue = 0, downnBlue = 0, rightnBlue = 0, upnBlue = 0;
+
+                if (pixels[i][j]) {
+                    int dev;
+                    for (dev = 1; dev < width; dev++) {
+                        if (i - dev >= 0 && !pixels[i - dev][j]) {
+                            leftnBlue++;
+                            if (leftnBlue > maxConsecNotBlue) break;
+                        } else {
+                            leftnBlue = 0;
+                        }
+
+                        if (i + dev < width && !pixels[i + dev][j]) {
+                            rightnBlue++;
+                            if (rightnBlue > maxConsecNotBlue) break;
+                        } else {
+                            rightnBlue = 0;
+                        }
+
+                        if (j - dev >= 0 && !pixels[i][j - dev]) {
+                            upnBlue++;
+                            if (upnBlue > maxConsecNotBlue) break;
+                        } else {
+                            upnBlue = 0;
+                        }
+
+                        if (j + dev < height && !pixels[i][j + dev]) {
+                            downnBlue++;
+                            if (downnBlue > maxConsecNotBlue) break;
+                        } else {
+                            downnBlue = 0;
+                        }
+                    }
+
+                    if (dev > maxRadius) {
+                        maxRadius = dev;
+                        maxX = i;
+                        maxY = j;
+                    }
+                }
+            }
+        }
+
+        ballPos[0] = maxX;
+        ballPos[1] = maxY;
+        ballPos[2] = maxRadius - maxConsecNotBlue;
+    }
+
+    private void processRedBitmap(Bitmap bm, int[] ballPos) {
+        int width = bm.getWidth();
+        int height = bm.getHeight();
+
+        int coarseness = 4;
+        int pixelCount = 0;
+        float[] pix = {0, 0, 0};
+
+        boolean[][] pixels = new boolean[width / coarseness + 1][height / coarseness + 1];
+
+        for (int i = 0; i < width; i += coarseness) {
+            for (int j = 0; j < height; j += coarseness) {
+                Color.colorToHSV(bm.getPixel(i, j), pix);
+                // pix[0] = H, pix[1] = S, pix[2] = V
+
+                pixels[i / coarseness][j / coarseness] = isRed(pix);
+                pixelCount += 1;
+            }
+        }
+
+        telemetry.addData("PixCount",pixelCount);
+
+        width /= coarseness;
+        height /= coarseness;
+
+        int maxConsecNotBlue = 6;
+
+        int maxRadius = -1;
+        int maxX = -1, maxY = -1;
+
+        for (int i = 0; i < width; i += 2) {
+            for (int j = 0; j < height; j += 2) {
+                int leftnBlue = 0, downnBlue = 0, rightnBlue = 0, upnBlue = 0;
+
+                if (pixels[i][j]) {
+                    int dev;
+                    for (dev = 1; dev < width; dev++) {
+                        if (i - dev >= 0 && !pixels[i - dev][j]) {
+                            leftnBlue++;
+                            if (leftnBlue > maxConsecNotBlue) break;
+                        } else {
+                            leftnBlue = 0;
+                        }
+
+                        if (i + dev < width && !pixels[i + dev][j]) {
+                            rightnBlue++;
+                            if (rightnBlue > maxConsecNotBlue) break;
+                        } else {
+                            rightnBlue = 0;
+                        }
+
+                        if (j - dev >= 0 && !pixels[i][j - dev]) {
+                            upnBlue++;
+                            if (upnBlue > maxConsecNotBlue) break;
+                        } else {
+                            upnBlue = 0;
+                        }
+
+                        if (j + dev < height && !pixels[i][j + dev]) {
+                            downnBlue++;
+                            if (downnBlue > maxConsecNotBlue) break;
+                        } else {
+                            downnBlue = 0;
+                        }
+                    }
+
+                    if (dev > maxRadius) {
+                        maxRadius = dev;
+                        maxX = i;
+                        maxY = j;
+                    }
+                }
+            }
+        }
+
+        ballPos[0] = maxX;
+        ballPos[1] = maxY;
+        ballPos[2] = maxRadius - maxConsecNotBlue;
+    }
+
+    private boolean processBitmap() {
+        time = System.currentTimeMillis();
+        Bitmap b = null;
+        ByteBuffer l;
+
+        boolean valid = false;
+
+        int width = 0, height = 0;
+        while (!valid) {
+            Image k = getPicture();
+
+            if (k != null) {
+                if (b == null) {
+                    b = Bitmap.createBitmap(k.getHeight(), k.getWidth(), Bitmap.Config.RGB_565);
+                }
+
+                valid = true;
+
+                l = k.getPixels();
+                b.copyPixelsFromBuffer(l);
+
+                telemetry.addData("BufferHeight", k.getHeight());
+                telemetry.addData("BufferWidth", k.getWidth());
+
+                telemetry.addData("BitmapHeight", b.getHeight());
+                telemetry.addData("BitmapWidth", b.getWidth());
+
+                width = b.getWidth();
+                height = b.getHeight();
+
+                int[] bluePos = new int[3];
+                int[] redPos = new int[3];
+
+                processBlueBitmap(b, bluePos);
+
+                telemetry.addData("Blue Height", bluePos[0]);
+                telemetry.addData("totH", width / 4 * 0.35);
+
+                return (bluePos[0] > 135);
+            }
+        }
+
+        return true;
+    }
+
+    TouchSensor touchSensor;
+    UltrasonicSensor ultra;
+
     @Override public void runOpMode() {
 
         /*
          * To start up Vuforia, tell it the view that we wish to use for camera monitor (on the RC phone);
          * If no camera monitor is desired, use the parameterless constructor instead (commented out below).
          */
+        touchSensor = hardwareMap.get(TouchSensor.class, "touch_sensor");
+        ultra = hardwareMap.ultrasonicSensor.get("ultra");
 
         robot.init(hardwareMap);
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
@@ -93,9 +352,43 @@ public class Red2Auto extends LinearOpMode {
                 robot.FRMotor.getCurrentPosition());
         telemetry.update();
 
+        setCameraDirection(-75);
+
+        sleep(1000);
+        boolean p = processBitmap();
+        telemetry.update();
+
+        sleep(2000);
+        telemetry.addData("System", "Ready!");
+        telemetry.update();
         waitForStart();
 
+
         relicTrackables.activate();
+
+
+        robot.milk.setPosition(0.15);
+        sleep(250);
+        robot.teat.setPosition(0.51);
+        sleep(250);
+
+
+        robot.milk.setPosition(0.9);
+
+        sleep(1000);
+
+        if (p ^ knockRed) {
+            robot.teat.setPosition(1);
+        } else {
+            robot.teat.setPosition(0);
+        }
+        robot.urethra.setPosition(0.5);
+
+        sleep(500);
+        robot.milk.setPosition(0.1);
+        sleep(200);
+        robot.teat.setPosition(1);
+
 
         while (opModeIsActive()) {
 
@@ -105,6 +398,10 @@ public class Red2Auto extends LinearOpMode {
              * UNKNOWN, LEFT, CENTER, and RIGHT. When a VuMark is visible, something other than
              * UNKNOWN will be returned by {@link RelicRecoveryVuMark#from(VuforiaTrackable)}.
              */
+
+            setCameraDirection(-10);
+            sleep(3000);
+
             vuMark = RelicRecoveryVuMark.from(relicTemplate);
             if (vuMark != RelicRecoveryVuMark.UNKNOWN) {
 
@@ -137,95 +434,20 @@ public class Red2Auto extends LinearOpMode {
                 }
 
 
-
-//close the claw first thing after start
-                robot.clawleft.setPosition(0.5);
-                robot.clawright.setPosition(0);
-                robot.arm.setPower(-0.2);
-                sleep(500);
-                robot.arm.setPower(0);
-                //actual auto start
-
-
                 if (vuMark == RelicRecoveryVuMark.RIGHT){
-                    encoderDrive(0.5,-15,-15,2.5);
-                    robot.SideMotor.setPower(-1);
-                    sleep(1100);
+                    encoderDrive(0.5, 24, 24, 0);
+                    double vis = ultra.getUltrasonicLevel() - 12;
+                    while (vis > 0) {
+                        robot.SideMotor.setPower(-(vis/10));
+                    }
                     robot.SideMotor.setPower(0);
-                    encoderDrive(1, -5, -5, 0.5);
-                    sleep(100);
-                    //open claw
-                    robot.clawleft.setPosition(0);
-                    robot.clawright.setPosition(0.5);
-                    sleep(300);
-                    encoderDrive(0.2,10,10,2);
-                    robot.clawleft.setPosition(0.5);
-                    robot.clawright.setPosition(0);
-                    encoderDrive(0.5,-10,-10,2);
-                    //open claw
-                /*robot.clawleft.setPosition(0.1);
-                robot.clawright.setPosition(0.4);
-                sleep(300);
-                encoderDrive(0.5,5,5,5);//drive back
-                robot.SideMotor.setPower(0.5);//drive to the right
-                sleep(600);
-                robot.SideMotor.setPower(0);
-                encoderDrive(0.5,13,13,10);
-                encoderDrive(0.5, 9, -9, 5);//turn 90 degrees
-                */
                     break;
                 }
                 if (vuMark == RelicRecoveryVuMark.CENTER){
-                    encoderDrive(0.5,-15,-15,2.5);
-                    robot.SideMotor.setPower(-1);
-                    sleep(720);
-                    robot.SideMotor.setPower(0);
-                    encoderDrive(1, -5, -5, 0.5);
-                    sleep(100);
-                    //open claw
-                    robot.clawleft.setPosition(0);
-                    robot.clawright.setPosition(0.5);
-                    sleep(300);
-                    encoderDrive(0.2,10,10,2);
-                    robot.clawleft.setPosition(0.5);
-                    robot.clawright.setPosition(0);
-                    encoderDrive(0.5,-10,-10,2);
-                
-                /*
-                encoderDrive(0.5,5,5,5);//drive back
-                robot.SideMotor.setPower(0.5);//drive to the right
-                sleep(500);
-                robot.SideMotor.setPower(0);
-                encoderDrive(0.5,15,15,10);
-                encoderDrive(0.5, 8.3, -8.3, 5);//turn 90 degrees
-                */
-                    break;
+
                 }
                 if (vuMark == RelicRecoveryVuMark.LEFT){
-                    encoderDrive(0.5,-15,-15,2.5);
-                    robot.SideMotor.setPower(-1);
-                    sleep(280);
-                    robot.SideMotor.setPower(0);
-                    encoderDrive(1, -5, -5, 0.5);
-                    sleep(100);
-                    //open claw
-                    robot.clawleft.setPosition(0);
-                    robot.clawright.setPosition(0.5);
-                    sleep(300);
-                    encoderDrive(0.2,10,10,2);
-                    robot.clawleft.setPosition(0.5);
-                    robot.clawright.setPosition(0);
-                    encoderDrive(0.8,-10,-10,2);
 
-                /*
-                encoderDrive(0.5,5,5,5);//drive back
-                robot.SideMotor.setPower(0.5);//drive to the right
-                sleep(1400);
-                robot.SideMotor.setPower(0);
-                encoderDrive(0.5,15,15,10);
-                encoderDrive(0.5, 8.3, -8.3, 5);//turn 90 degrees
-*/
-                    break;
                 }
             }
             else {

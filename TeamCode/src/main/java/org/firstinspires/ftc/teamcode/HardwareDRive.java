@@ -30,9 +30,12 @@ public class HardwareDRive
     public DcMotor BLMotor  = null;
     public DcMotor BRMotor  = null;
     public DcMotor SideMotor   = null;
-    public Servo armleft = null;
+    public Servo udd = null;
     public Servo clawleft = null;
     public Servo clawright = null;
+    public Servo milk = null;
+    public Servo teat = null;
+    public Servo urethra = null;
     public DcMotor arm = null;
 
 
@@ -57,9 +60,12 @@ public class HardwareDRive
         BRMotor   = hwMap.dcMotor.get("BR");
         arm = hwMap.dcMotor.get("arm");
         SideMotor = hwMap.dcMotor.get("sidedrive");
-        armleft  = hwMap.get(Servo.class, "armleft");
+        udd  = hwMap.get(Servo.class, "udd");
         clawleft  = hwMap.get(Servo.class, "clawleft");
         clawright  = hwMap.get(Servo.class, "clawright");
+        milk = hwMap.get(Servo.class, "milk");
+        teat = hwMap.get(Servo.class, "teat");
+        urethra = hwMap.get(Servo.class, "urethra");
 
         //BlueMotor   = hwMap.dcMotor.get("Blue");
         //GreenMotor   = hwMap.dcMotor.get("Green");

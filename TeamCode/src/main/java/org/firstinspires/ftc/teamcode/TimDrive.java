@@ -173,11 +173,11 @@ public class TimDrive extends LinearOpMode {
 
     public void updateLeftArm() {
         if (gamepad1.a) {
-            robot.armleft.setPosition(0);
+            robot.udd.setPosition(0);
         }
 
         if (gamepad1.b) {
-            robot.armleft.setPosition(0.75);
+            robot.udd.setPosition(0.75);
         }
     }
 
@@ -302,13 +302,13 @@ public class TimDrive extends LinearOpMode {
             lastRightBumper = gamepad1.right_bumper;
 
             if (gamepad1.a){
-                robot.armleft.setPosition(0); //connect to port 1 on servo controller
+                robot.udd.setPosition(0); //connect to port 1 on servo controller
             }
             if (gamepad1.b){
-                robot.armleft.setPosition(0.75);
+                robot.udd.setPosition(0.75);
             }
             if (gamepad1.y){
-                robot.armleft.setPosition(0.9);
+                robot.udd.setPosition(0.9);
             }
         }
 

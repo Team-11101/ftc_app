@@ -166,11 +166,11 @@ public class TimDriveClone extends LinearOpMode {
 
     public void updateLeftArm() {
         if (gamepad1.a) {
-            robot.armleft.setPosition(0);
+            robot.udd.setPosition(0);
         }
 
         if (gamepad1.b) {
-            robot.armleft.setPosition(0.75);
+            robot.udd.setPosition(0.75);
         }
     }
 
