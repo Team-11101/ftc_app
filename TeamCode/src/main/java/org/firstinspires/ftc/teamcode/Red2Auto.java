@@ -383,7 +383,7 @@ public class Red2Auto extends LinearOpMode {
         } else {
             robot.teat.setPosition(0);
         }
-        robot.urethra.setPosition(0.5);
+        robot.urethra.setPosition(0);
 
         sleep(500);
         robot.milk.setPosition(0.1);
@@ -436,6 +436,7 @@ public class Red2Auto extends LinearOpMode {
 
 
                 if (vuMark == RelicRecoveryVuMark.RIGHT){
+                    robot.urethra.setPosition(1);
                     encoderDrive(0.5, 100, 100, 5);
                     sleep(100);
                     while (!touchSensor.isPressed())
