@@ -48,7 +48,7 @@ public class Red2Auto extends LinearOpMode {
 
     public static final String TAG = "Vuforia VuMark Sample";
 
-    static final boolean knockRed = false;
+    static final boolean knockRed = true;
 
     OpenGLMatrix lastLocation = null;
 
@@ -87,15 +87,16 @@ public class Red2Auto extends LinearOpMode {
         return rgb;
     }
 
+    private void setCameraDirection(double angle) {
+        robot.udd.setPosition(angle / 360.0);
+    }
+
     private boolean isBlue(float[] pix) {
         return (Math.abs((pix[0] / 256.) - .59091) < 0.3) && (pix[1] > 0.7) && (pix[2] > 0.3);
     }
-    private boolean isRed(float[] pix) {
-        return (Math.abs((pix[0] / 256.) - 1.32) < 0.4) && (pix[1] > 0.6) && (pix[2] > 0.2);
-    }
 
-    private void setCameraDirection(double angle) {
-        robot.udd.setPosition(angle / 360.0);
+    private boolean isRed(float[] pix) {
+        return ((Math.abs((pix[0] / 256.) - 1.32) < 0.2) || (Math.abs((pix[0] / 256.)) < 0.3)) && (pix[1] > 0.5) && (pix[2] > 0.2);
     }
 
     private void processBlueBitmap(Bitmap bm, int[] ballPos) {
@@ -123,7 +124,7 @@ public class Red2Auto extends LinearOpMode {
         width /= coarseness;
         height /= coarseness;
 
-        int maxConsecNotBlue = 5;
+        int maxConsecNotBlue = 6;
 
         int maxRadius = -1;
         int maxX = -1, maxY = -1;
@@ -258,6 +259,48 @@ public class Red2Auto extends LinearOpMode {
         ballPos[2] = maxRadius - maxConsecNotBlue;
     }
 
+    private boolean isBlueLine(float[] pix) {
+        return (Math.abs((pix[0] / 256.) - 0.86) < 0.35) && (pix[1] > 0.4) && (pix[2] > 0.2);
+    }
+
+    private int processBlueLine() {
+        Image k = getPicture();
+
+        Bitmap bm = Bitmap.createBitmap(k.getHeight(), k.getWidth(), Bitmap.Config.RGB_565);
+
+        ByteBuffer an_ = k.getPixels();
+        bm.copyPixelsFromBuffer(an_);
+
+        int width = bm.getWidth();
+        int height = bm.getHeight();
+
+        int h_f = 200;
+
+        int consecCount = 0;
+
+        for (int l = h_f; l < height; l++) {
+            int count = 0;
+            float[] pix = new float[3];
+            for (int i = width / 2 - 15; i < width / 2 + 15; i++) {
+                Color.colorToHSV(bm.getPixel(i, l), pix);
+                if (isBlue(pix)) {
+                    count += 1;
+                    telemetry.addData("pix", pix[0]);
+                    telemetry.addData("pix", pix[1]);
+                    telemetry.addData("pix", pix[2]);
+                    telemetry.addData("l", l);
+                    telemetry.addData("i", i);
+                    telemetry.update();
+                    sleep(50);
+                }
+            }
+            if (count > 12) {
+                return l - h_f;
+            }
+        }
+        return -1;
+    }
+
     private boolean processBitmap() {
         time = System.currentTimeMillis();
         Bitmap b = null;
@@ -292,15 +335,37 @@ public class Red2Auto extends LinearOpMode {
                 int[] redPos = new int[3];
 
                 processBlueBitmap(b, bluePos);
+                processRedBitmap(b, redPos);
 
                 telemetry.addData("Blue Height", bluePos[0]);
+                telemetry.addData("Red Height", redPos[0]);
+
                 telemetry.addData("totH", width / 4 * 0.35);
 
-                return (bluePos[0] > 88);
+                return (bluePos[0] > redPos[0]);
             }
         }
 
         return true;
+    }
+
+    double clawClosedPosition = 0;
+    double clawIntermediatePosition = 0.5;
+    double clawOpenPosition = 1;
+
+    public void openClaw() {
+        robot.clawleft.setPosition(clawClosedPosition);
+        robot.clawright.setPosition(clawOpenPosition);
+    }
+
+    public void closeClaw() {
+        robot.clawleft.setPosition(clawOpenPosition);
+        robot.clawright.setPosition(clawClosedPosition);
+    }
+
+    public void intermediateClaw() {
+        robot.clawleft.setPosition(clawIntermediatePosition);
+        robot.clawright.setPosition(1 - clawIntermediatePosition);
     }
 
     TouchSensor touchSensor;
@@ -353,9 +418,13 @@ public class Red2Auto extends LinearOpMode {
                 robot.FRMotor.getCurrentPosition());
         telemetry.update();
 
+        openClaw();
+        robot.teat.setPosition(0);
+        robot.milk.setPosition(0);
+
         setCameraDirection(-75);
 
-        sleep(1000);
+        sleep(4000);
         boolean p = processBitmap();
         telemetry.update();
 
@@ -364,13 +433,15 @@ public class Red2Auto extends LinearOpMode {
         telemetry.update();
         waitForStart();
 
+        setCameraDirection(30); // move to crotch
+
 
         relicTrackables.activate();
 
-
+        openClaw();
         robot.milk.setPosition(0.15);
         sleep(250);
-        robot.teat.setPosition(0.51);
+        robot.teat.setPosition(0.4);
         sleep(250);
 
 
@@ -378,18 +449,33 @@ public class Red2Auto extends LinearOpMode {
 
         sleep(1000);
 
-        if (p ^ knockRed) {
-            robot.teat.setPosition(1);
-        } else {
+        if (p) {
             robot.teat.setPosition(0);
+        } else {
+            robot.teat.setPosition(1);
         }
         robot.urethra.setPosition(0);
 
-        sleep(500);
-        robot.milk.setPosition(0.1);
-        sleep(200);
-        robot.teat.setPosition(1);
 
+        robot.arm.setPower(-0.2); // up
+        sleep(500);
+
+        robot.arm.setPower(0); // stop up
+
+        intermediateClaw(); // claw
+        sleep(400);
+
+        robot.arm.setPower(0.2); // down
+        sleep(1400);
+
+        robot.arm.setPower(0);
+        closeClaw(); // claw
+        sleep(400);
+
+        robot.arm.setPower(-0.5); // up
+        sleep(3200);
+
+        robot.arm.setPower(0); // stop down
 
         while (opModeIsActive()) {
 
@@ -400,11 +486,16 @@ public class Red2Auto extends LinearOpMode {
              * UNKNOWN will be returned by {@link RelicRecoveryVuMark#from(VuforiaTrackable)}.
              */
 
-            setCameraDirection(-10);
-            sleep(3000);
+
 
             vuMark = RelicRecoveryVuMark.from(relicTemplate);
             if (vuMark != RelicRecoveryVuMark.UNKNOWN) {
+                sleep(500);
+                robot.milk.setPosition(0);
+                sleep(200);
+                robot.teat.setPosition(1);
+
+
 
                 /* Found an instance of the template. In the actual game, you will probably
                  * loop until this condition occurs, then move on to act accordingly depending
@@ -437,16 +528,32 @@ public class Red2Auto extends LinearOpMode {
 
                 if (vuMark == RelicRecoveryVuMark.RIGHT){
                     robot.urethra.setPosition(1);
-                    encoderDrive(0.5, 100, 100, 5);
-                    sleep(100);
-                    while (!touchSensor.isPressed())
+                    robot.FLMotor.setPower(1);
+                    robot.FRMotor.setPower(1);
+                    robot.BLMotor.setPower(1);
+                    robot.BRMotor.setPower(-1);
+
+                    sleep(3700);
+
+                    setCameraDirection(100);
+
+                    while (true) {
+                        int k = processBlueLine();
+                        telemetry.addData("Dis", k);
+                        telemetry.update();
+                        sleep(4000);
+                    }
+
+
+
+                    /*while (!touchSensor.isPressed())
                     {
                         vis = ultra.getUltrasonicLevel() - 12;
                         robot.SideMotor.setPower(vis/10);
                         if (touchSensor.isPressed()){
                             robot.SideMotor.setPower(0);
                         }
-                    }
+                    }*/
                     /*while (vis > 0) {
                         robot.SideMotor.setPower(-(vis/10));
                     }
@@ -490,12 +597,15 @@ public class Red2Auto extends LinearOpMode {
         if (opModeIsActive()) {
 
             // Determine new target position, and pass to motor controller
-            newLeftTarget = robot.FLMotor.getCurrentPosition() + (int)(leftInches * COUNTS_PER_INCH);
-            newRightTarget = robot.FRMotor.getCurrentPosition() + (int)(rightInches * COUNTS_PER_INCH);
-            newLeftTarget = robot.BLMotor.getCurrentPosition() + (int)(leftInches * COUNTS_PER_INCH);
-            newRightTarget = robot.BRMotor.getCurrentPosition() + (int)(rightInches * COUNTS_PER_INCH);
+            newLeftTarget = robot.FLMotor.getCurrentPosition() - (int)(leftInches * COUNTS_PER_INCH);
+            newRightTarget = robot.FRMotor.getCurrentPosition() - (int)(rightInches * COUNTS_PER_INCH);
+
             robot.FLMotor.setTargetPosition(newLeftTarget);
             robot.FRMotor.setTargetPosition(newRightTarget);
+
+            newLeftTarget = robot.BLMotor.getCurrentPosition() - (int)(leftInches * COUNTS_PER_INCH);
+            newRightTarget = robot.BRMotor.getCurrentPosition() + (int)(rightInches * COUNTS_PER_INCH);
+
             robot.BLMotor.setTargetPosition(newLeftTarget);
             robot.BRMotor.setTargetPosition(newRightTarget);
 
@@ -507,10 +617,10 @@ public class Red2Auto extends LinearOpMode {
 
             // reset the timeout time and start motion.
             runtime.reset();
-            robot.FLMotor.setPower(Math.abs(-speed));
-            robot.FRMotor.setPower(Math.abs(speed*0.7));
-            robot.BLMotor.setPower(Math.abs(-speed));
-            robot.BRMotor.setPower(Math.abs(speed*0.7));
+            robot.FLMotor.setPower(speed);
+            robot.FRMotor.setPower(speed*0.7);
+            robot.BLMotor.setPower(speed);
+            robot.BRMotor.setPower(speed*0.7);
 
             // keep looping while we are still active, and there is time left, and both motors are running.
             while (opModeIsActive() &&

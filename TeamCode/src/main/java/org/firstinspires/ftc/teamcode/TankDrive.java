@@ -10,6 +10,7 @@ import java.util.Enumeration;
 
 //@Disabled
 @TeleOp(name="TankDrive", group="Pushbot")
+@Disabled
 public class TankDrive extends LinearOpMode {
 
     /* Declare OpMode members. */

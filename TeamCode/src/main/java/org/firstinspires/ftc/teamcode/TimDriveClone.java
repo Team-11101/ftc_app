@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -7,7 +8,7 @@ import java.util.Date;
 import java.util.Hashtable;
 import java.util.Enumeration;
 
-//@Disabled
+@Disabled
 @TeleOp(name="TimDriveClone", group="Pushbot")
 public class TimDriveClone extends LinearOpMode {
 

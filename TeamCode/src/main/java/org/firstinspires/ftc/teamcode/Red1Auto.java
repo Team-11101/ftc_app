@@ -2,6 +2,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.TouchSensor;
@@ -23,8 +24,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 
 
 
-@Autonomous(name="Red1Auto", group ="Pushbot")
-//@Disabled
+//@Autonomous(name="Red1Auto", group ="Pushbot")
+@Disabled
 public class Red1Auto extends LinearOpMode {
 
     HardwareDRive         robot   = new HardwareDRive();   // Use a Pushbot's hardware
