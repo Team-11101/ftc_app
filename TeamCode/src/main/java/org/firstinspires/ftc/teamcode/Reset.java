@@ -24,14 +24,16 @@ public class Reset extends LinearOpMode  {
 
         robot.teat.setPosition(0);
         robot.arm.setPower(-0.5);
-
         sleep(1700);
         robot.milk.setPosition(0);
         sleep(500);
         robot.arm.setPower(0.5);
+        robot.urethra.setPosition(0.5);
         robot.clawleft.setPosition(0);
         robot.clawright.setPosition(1);
         sleep(1550);
         robot.arm.setPower(0);
+        robot.urethra.setPosition(1);
+        sleep(500);
     }
 }

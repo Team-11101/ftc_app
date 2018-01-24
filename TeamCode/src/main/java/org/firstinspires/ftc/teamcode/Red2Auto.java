@@ -283,7 +283,7 @@ public class Red2Auto extends LinearOpMode {
             float[] pix = new float[3];
             for (int i = width / 2 - 15; i < width / 2 + 15; i++) {
                 Color.colorToHSV(bm.getPixel(i, l), pix);
-                if (isBlue(pix)) {
+                if (isBlueLine(pix)) {
                     count += 1;
                     telemetry.addData("pix", pix[0]);
                     telemetry.addData("pix", pix[1]);
@@ -291,7 +291,7 @@ public class Red2Auto extends LinearOpMode {
                     telemetry.addData("l", l);
                     telemetry.addData("i", i);
                     telemetry.update();
-                    sleep(50);
+                    sleep(251);
                 }
             }
             if (count > 12) {
@@ -349,8 +349,8 @@ public class Red2Auto extends LinearOpMode {
         return true;
     }
 
-    double clawClosedPosition = 0;
-    double clawIntermediatePosition = 0.5;
+    double clawClosedPosition = 0.15;
+    double clawIntermediatePosition = 0.35;
     double clawOpenPosition = 1;
 
     public void openClaw() {
@@ -402,6 +402,8 @@ public class Red2Auto extends LinearOpMode {
         robot.BLMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         robot.BRMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
+        robot.urethra.setPosition(1);
+
         idle();
 
         robot.FLMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -433,6 +435,10 @@ public class Red2Auto extends LinearOpMode {
         telemetry.update();
         waitForStart();
 
+        robot.urethra.setPosition(0.5);
+        sleep(300);
+        robot.urethra.setPosition(0.25);
+
         setCameraDirection(30); // move to crotch
 
 
@@ -442,6 +448,7 @@ public class Red2Auto extends LinearOpMode {
         robot.milk.setPosition(0.15);
         sleep(250);
         robot.teat.setPosition(0.4);
+        robot.urethra.setPosition(0.5);
         sleep(250);
 
 
@@ -454,7 +461,7 @@ public class Red2Auto extends LinearOpMode {
         } else {
             robot.teat.setPosition(1);
         }
-        robot.urethra.setPosition(0);
+        robot.urethra.setPosition(0.25);
 
 
         robot.arm.setPower(-0.2); // up
@@ -466,7 +473,7 @@ public class Red2Auto extends LinearOpMode {
         sleep(400);
 
         robot.arm.setPower(0.2); // down
-        sleep(1400);
+        sleep(900);
 
         robot.arm.setPower(0);
         closeClaw(); // claw
@@ -474,6 +481,8 @@ public class Red2Auto extends LinearOpMode {
 
         robot.arm.setPower(-0.5); // up
         sleep(3200);
+
+        robot.urethra.setPosition(0);
 
         robot.arm.setPower(0); // stop down
 
@@ -527,23 +536,72 @@ public class Red2Auto extends LinearOpMode {
 
 
                 if (vuMark == RelicRecoveryVuMark.RIGHT){
-                    robot.urethra.setPosition(1);
+                    robot.urethra.setPosition(0);
                     robot.FLMotor.setPower(1);
                     robot.FRMotor.setPower(1);
                     robot.BLMotor.setPower(1);
                     robot.BRMotor.setPower(-1);
 
-                    sleep(3700);
+                    double oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw = 0.2158109824981071;
 
-                    setCameraDirection(100);
-
-                    while (true) {
-                        int k = processBlueLine();
-                        telemetry.addData("Dis", k);
+                    while (ultra.getUltrasonicLevel() > 43) {
+                        telemetry.addData("dis", ultra.getUltrasonicLevel());
                         telemetry.update();
-                        sleep(4000);
+
+                        oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw *= 2.5;
+                        oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw += 0.03;
+                        oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw = oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw - Math.floor(oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw);
+                        robot.teat.setPosition(oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw / 2.0);
+                        sleep(100);
                     }
 
+                    telemetry.addData("dis", ultra.getUltrasonicLevel());
+                    telemetry.update();
+
+                    robot.FLMotor.setPower(0);
+                    robot.FRMotor.setPower(0);
+                    robot.BLMotor.setPower(0);
+                    robot.BRMotor.setPower(0);
+
+                    double udd = ultra.getUltrasonicLevel();
+
+                    robot.SideMotor.setPower(-0.5);
+
+                    sleep(1000);
+                    robot.SideMotor.setPower(0);
+
+                    double diff = ultra.getUltrasonicLevel() - udd;
+                    robot.SideMotor.setPower(0.5);
+                    sleep(1350);
+                    robot.SideMotor.setPower(0);
+
+                    robot.FLMotor.setPower(0.1);
+                    robot.FRMotor.setPower(-0.1);
+                    robot.BLMotor.setPower(0.1);
+                    robot.BRMotor.setPower(0.1);
+
+                    sleep(Math.abs((long)(diff * 120)));
+
+                    robot.FLMotor.setPower(0);
+                    robot.FRMotor.setPower(0);
+                    robot.BLMotor.setPower(0);
+                    robot.BRMotor.setPower(0);
+
+                    sleep(300);
+
+                    robot.SideMotor.setPower(1);
+                    long time = System.currentTimeMillis();
+
+                    while (!touchSensor.isPressed()) {
+                        oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw *= 2.5;
+                        oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw += 0.03;
+                        oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw = oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw - Math.floor(oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw);
+                        robot.teat.setPosition(oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw / 2.0);
+                        robot.milk.setPosition(oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw / 10);
+                        sleep(100);
+                    }
+
+                    robot.SideMotor.setPower(0);
 
 
                     /*while (!touchSensor.isPressed())
@@ -559,6 +617,7 @@ public class Red2Auto extends LinearOpMode {
                     }
                     robot.SideMotor.setPower(0);
                     break;*/
+                    break;
                 }
                 if (vuMark == RelicRecoveryVuMark.CENTER){
 
