@@ -113,8 +113,9 @@ public class TimDrive extends LinearOpMode {
         timings.set("smod", new TimeTuple(100, 0));
     }
 
-    double clawClosedPosition = 0;
-    double clawOpenPosition = 0.4;
+    double clawClosedPosition = 0.15;
+    double clawIntermediatePosition = 0.35;
+    double clawOpenPosition = 1;
 
     public void openClaw() {
         robot.clawleft.setPosition(clawClosedPosition);
@@ -127,8 +128,8 @@ public class TimDrive extends LinearOpMode {
     }
 
     public void intermediateClaw() {
-        robot.clawleft.setPosition((clawOpenPosition + clawClosedPosition) / 2);
-        robot.clawright.setPosition((clawOpenPosition + clawClosedPosition) / 2);
+        robot.clawleft.setPosition(clawIntermediatePosition);
+        robot.clawright.setPosition(1 - clawIntermediatePosition);
     }
 
 

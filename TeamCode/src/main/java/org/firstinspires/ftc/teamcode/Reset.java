@@ -33,7 +33,7 @@ public class Reset extends LinearOpMode  {
         robot.clawright.setPosition(1);
         sleep(1550);
         robot.arm.setPower(0);
-        robot.urethra.setPosition(1);
+        robot.urethra.setPosition(0);
         sleep(500);
     }
 }

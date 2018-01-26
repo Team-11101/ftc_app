@@ -291,7 +291,7 @@ public class Red2Auto extends LinearOpMode {
                     telemetry.addData("l", l);
                     telemetry.addData("i", i);
                     telemetry.update();
-                    sleep(251);
+                    horse(251);
                 }
             }
             if (count > 12) {
@@ -370,6 +370,12 @@ public class Red2Auto extends LinearOpMode {
 
     TouchSensor touchSensor;
     UltrasonicSensor ultra;
+    
+    private void horse(long milli) {
+        sleep(milli);
+    }
+
+    static int cockLength = 31;
 
     @Override public void runOpMode() {
 
@@ -402,7 +408,7 @@ public class Red2Auto extends LinearOpMode {
         robot.BLMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         robot.BRMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        robot.urethra.setPosition(1);
+        robot.urethra.setPosition(0.2);
 
         idle();
 
@@ -426,18 +432,18 @@ public class Red2Auto extends LinearOpMode {
 
         setCameraDirection(-75);
 
-        sleep(4000);
+        horse(4000);
         boolean p = processBitmap();
         telemetry.update();
 
-        sleep(2000);
+        horse(2000);
         telemetry.addData("System", "Ready!");
         telemetry.update();
         waitForStart();
 
-        robot.urethra.setPosition(0.5);
-        sleep(300);
-        robot.urethra.setPosition(0.25);
+        robot.urethra.setPosition(0.75);
+        horse(300);
+        robot.urethra.setPosition(0.75);
 
         setCameraDirection(30); // move to crotch
 
@@ -446,43 +452,43 @@ public class Red2Auto extends LinearOpMode {
 
         openClaw();
         robot.milk.setPosition(0.15);
-        sleep(250);
+        horse(250);
         robot.teat.setPosition(0.4);
-        robot.urethra.setPosition(0.5);
-        sleep(250);
+        robot.urethra.setPosition(0.75);
+        horse(250);
 
 
         robot.milk.setPosition(0.9);
 
-        sleep(1000);
+        horse(1000);
 
         if (p) {
             robot.teat.setPosition(0);
         } else {
             robot.teat.setPosition(1);
         }
-        robot.urethra.setPosition(0.25);
+        robot.urethra.setPosition(0.75);
 
 
         robot.arm.setPower(-0.2); // up
-        sleep(500);
+        horse(500);
 
         robot.arm.setPower(0); // stop up
 
         intermediateClaw(); // claw
-        sleep(400);
+        horse(400);
 
         robot.arm.setPower(0.2); // down
-        sleep(900);
+        horse(900);
 
         robot.arm.setPower(0);
         closeClaw(); // claw
-        sleep(400);
+        horse(400);
 
         robot.arm.setPower(-0.5); // up
-        sleep(3200);
+        horse(3200);
 
-        robot.urethra.setPosition(0);
+        robot.urethra.setPosition(1);
 
         robot.arm.setPower(0); // stop down
 
@@ -499,10 +505,10 @@ public class Red2Auto extends LinearOpMode {
 
             vuMark = RelicRecoveryVuMark.from(relicTemplate);
             if (vuMark != RelicRecoveryVuMark.UNKNOWN) {
-                sleep(500);
+                horse(500);
                 robot.milk.setPosition(0);
-                sleep(200);
-                robot.teat.setPosition(1);
+                horse(200);
+                robot.teat.setPosition(0);
 
 
 
@@ -536,15 +542,16 @@ public class Red2Auto extends LinearOpMode {
 
 
                 if (vuMark == RelicRecoveryVuMark.RIGHT){
-                    robot.urethra.setPosition(0);
-                    robot.FLMotor.setPower(1);
-                    robot.FRMotor.setPower(1);
-                    robot.BLMotor.setPower(1);
-                    robot.BRMotor.setPower(-1);
+                    robot.urethra.setPosition(1);
+                    robot.FLMotor.setPower(0.9);
+                    robot.FRMotor.setPower(0.7);
+                    robot.BLMotor.setPower(0.9);
+                    robot.BRMotor.setPower(-0.7);
 
+                    horse(1700);
                     double oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw = 0.2158109824981071;
 
-                    while (ultra.getUltrasonicLevel() > 43) {
+                    while (ultra.getUltrasonicLevel() > cockLength) {
                         telemetry.addData("dis", ultra.getUltrasonicLevel());
                         telemetry.update();
 
@@ -552,7 +559,7 @@ public class Red2Auto extends LinearOpMode {
                         oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw += 0.03;
                         oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw = oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw - Math.floor(oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw);
                         robot.teat.setPosition(oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw / 2.0);
-                        sleep(100);
+                        horse(100);
                     }
 
                     telemetry.addData("dis", ultra.getUltrasonicLevel());
@@ -567,12 +574,12 @@ public class Red2Auto extends LinearOpMode {
 
                     robot.SideMotor.setPower(-0.5);
 
-                    sleep(1000);
+                    horse(1000);
                     robot.SideMotor.setPower(0);
 
                     double diff = ultra.getUltrasonicLevel() - udd;
                     robot.SideMotor.setPower(0.5);
-                    sleep(1350);
+                    horse(135);
                     robot.SideMotor.setPower(0);
 
                     robot.FLMotor.setPower(0.1);
@@ -580,16 +587,37 @@ public class Red2Auto extends LinearOpMode {
                     robot.BLMotor.setPower(0.1);
                     robot.BRMotor.setPower(0.1);
 
-                    sleep(Math.abs((long)(diff * 120)));
+                    horse(Math.abs((long)(diff * 120)));
 
                     robot.FLMotor.setPower(0);
                     robot.FRMotor.setPower(0);
                     robot.BLMotor.setPower(0);
                     robot.BRMotor.setPower(0);
 
-                    sleep(300);
+                    robot.SideMotor.setPower(.2);
+                    for (int ass = 0; ass < 20; ass++) {
+                        oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw *= 2.5;
+                        oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw += 0.03;
+                        oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw = oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw - Math.floor(oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw);
+                        robot.teat.setPosition(oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw / 2.0);
+                        robot.milk.setPosition(oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw / 10);
 
-                    robot.SideMotor.setPower(1);
+                        //robot.urethra.setPosition(1 - oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw / 10);
+
+                        double newPower = Math.max(Math.min((ultra.getUltrasonicLevel() - cockLength) / 5, 1), -1) / 10;
+                        if (Math.abs(newPower) < 4 / 10.0) {
+                            newPower = 0;
+                        }
+
+                        robot.FLMotor.setPower(newPower);
+                        robot.FRMotor.setPower(newPower);
+                        robot.BLMotor.setPower(newPower);
+                        robot.BRMotor.setPower(-newPower);
+
+                        horse(100);
+                    }
+
+                    robot.SideMotor.setPower(-.2);
                     long time = System.currentTimeMillis();
 
                     while (!touchSensor.isPressed()) {
@@ -598,8 +626,28 @@ public class Red2Auto extends LinearOpMode {
                         oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw = oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw - Math.floor(oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw);
                         robot.teat.setPosition(oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw / 2.0);
                         robot.milk.setPosition(oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw / 10);
-                        sleep(100);
+
+                        //robot.urethra.setPosition(1 - oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw / 10);
+
+                        double newPower = Math.max(Math.min((ultra.getUltrasonicLevel() - cockLength) / 5, 1), -1) / 10;
+                        if (Math.abs(newPower) < 4 / 10.0) {
+                            newPower = 0;
+                        }
+
+                        robot.FLMotor.setPower(newPower);
+                        robot.FRMotor.setPower(newPower);
+                        robot.BLMotor.setPower(newPower);
+                        robot.BRMotor.setPower(-newPower);
+
+                        horse(100);
+
+
                     }
+
+                    robot.FLMotor.setPower(0);
+                    robot.FRMotor.setPower(0);
+                    robot.BLMotor.setPower(0);
+                    robot.BRMotor.setPower(0);
 
                     robot.SideMotor.setPower(0);
 
@@ -707,7 +755,7 @@ public class Red2Auto extends LinearOpMode {
             robot.FRMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             robot.BLMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             robot.BRMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            //  sleep(250);   // optional pause after each move
+            //  horse(250);   // optional pause after each move
         }
     }
 
