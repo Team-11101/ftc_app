@@ -1,11 +1,18 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import android.graphics.Bitmap;
+import android.graphics.Color;
+
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.TouchSensor;
+import com.qualcomm.robotcore.hardware.UltrasonicSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.vuforia.Image;
+import com.vuforia.PIXEL_FORMAT;
+import com.vuforia.Vuforia;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
@@ -20,10 +27,11 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 
+import java.nio.ByteBuffer;
 
 
-//@Autonomous(name="Blue2Auto", group ="Pushbot")
-@Disabled
+@Autonomous(name="Blue2Auto", group ="Pushbot")
+//@Disabled
 public class Blue2Auto extends LinearOpMode {
 
     HardwareDRive         robot   = new HardwareDRive();   // Use a Pushbot's hardware
@@ -36,8 +44,11 @@ public class Blue2Auto extends LinearOpMode {
             (WHEEL_DIAMETER_INCHES * 3.1415);
 
     int Dis=700;
+    double vis=0;
 
     public static final String TAG = "Vuforia VuMark Sample";
+
+    static final boolean knockRed = true;
 
     OpenGLMatrix lastLocation = null;
 
@@ -49,12 +60,331 @@ public class Blue2Auto extends LinearOpMode {
      */
     VuforiaLocalizer vuforia;
 
+    private Image getPicture() {
+
+        Vuforia.setFrameFormat(PIXEL_FORMAT.RGB565, true); //enables RGB565 format for the image
+        vuforia.setFrameQueueCapacity(1);
+
+        VuforiaLocalizer.CloseableFrame frame; //takes the frame at the head of the queue
+        try {
+            frame = vuforia.getFrameQueue().take();
+        } catch (InterruptedException e) {
+            telemetry.addData("e",e.getMessage());
+            return null;
+        }
+
+        Image rgb = null;
+
+        long numImages = frame.getNumImages();
+
+        for (int i = 0; i < numImages; i++) {
+            if (frame.getImage(i).getFormat() == PIXEL_FORMAT.RGB565) {
+                rgb = frame.getImage(i);
+                break;
+            }
+        }
+
+        return rgb;
+    }
+
+    private void setCameraDirection(double angle) {
+        robot.udd.setPosition(angle / 360.0);
+    }
+
+    private boolean isBlue(float[] pix) {
+        return (Math.abs((pix[0] / 256.) - .59091) < 0.3) && (pix[1] > 0.7) && (pix[2] > 0.3);
+    }
+
+    private boolean isRed(float[] pix) {
+        return ((Math.abs((pix[0] / 256.) - 1.32) < 0.2) || (Math.abs((pix[0] / 256.)) < 0.3)) && (pix[1] > 0.5) && (pix[2] > 0.2);
+    }
+
+    private void processBlueBitmap(Bitmap bm, int[] ballPos) {
+        int width = bm.getWidth();
+        int height = bm.getHeight();
+
+        int coarseness = 4;
+        int pixelCount = 0;
+        float[] pix = {0, 0, 0};
+
+        boolean[][] pixels = new boolean[width / coarseness + 1][height / coarseness + 1];
+
+        for (int i = 0; i < width; i += coarseness) {
+            for (int j = 0; j < height / 2.0; j += coarseness) {
+                Color.colorToHSV(bm.getPixel(i, j), pix);
+                // pix[0] = H, pix[1] = S, pix[2] = V
+
+                pixels[i / coarseness][j / coarseness] = isBlue(pix);
+                pixelCount += 1;
+            }
+        }
+
+        telemetry.addData("PixCount",pixelCount);
+
+        width /= coarseness;
+        height /= coarseness;
+
+        int maxConsecNotBlue = 6;
+
+        int maxRadius = -1;
+        int maxX = -1, maxY = -1;
+
+        for (int i = 0; i < width; i += 2) {
+            for (int j = 0; j < height / 2.0; j += 2) {
+                int leftnBlue = 0, downnBlue = 0, rightnBlue = 0, upnBlue = 0;
+
+                if (pixels[i][j]) {
+                    int dev;
+                    for (dev = 1; dev < width; dev++) {
+                        if (i - dev >= 0 && !pixels[i - dev][j]) {
+                            leftnBlue++;
+                            if (leftnBlue > maxConsecNotBlue) break;
+                        } else {
+                            leftnBlue = 0;
+                        }
+
+                        if (i + dev < width && !pixels[i + dev][j]) {
+                            rightnBlue++;
+                            if (rightnBlue > maxConsecNotBlue) break;
+                        } else {
+                            rightnBlue = 0;
+                        }
+
+                        if (j - dev >= 0 && !pixels[i][j - dev]) {
+                            upnBlue++;
+                            if (upnBlue > maxConsecNotBlue) break;
+                        } else {
+                            upnBlue = 0;
+                        }
+
+                        if (j + dev < height && !pixels[i][j + dev]) {
+                            downnBlue++;
+                            if (downnBlue > maxConsecNotBlue) break;
+                        } else {
+                            downnBlue = 0;
+                        }
+                    }
+
+                    if (dev > maxRadius) {
+                        maxRadius = dev;
+                        maxX = i;
+                        maxY = j;
+                    }
+                }
+            }
+        }
+
+        ballPos[0] = maxX;
+        ballPos[1] = maxY;
+        ballPos[2] = maxRadius - maxConsecNotBlue;
+    }
+
+    private void processRedBitmap(Bitmap bm, int[] ballPos) {
+        int width = bm.getWidth();
+        int height = bm.getHeight();
+
+        int coarseness = 4;
+        int pixelCount = 0;
+        float[] pix = {0, 0, 0};
+
+        boolean[][] pixels = new boolean[width / coarseness + 1][height / coarseness + 1];
+
+        for (int i = 0; i < width; i += coarseness) {
+            for (int j = 0; j < height / 2.0; j += coarseness) {
+                Color.colorToHSV(bm.getPixel(i, j), pix);
+                // pix[0] = H, pix[1] = S, pix[2] = V
+
+                pixels[i / coarseness][j / coarseness] = isRed(pix);
+                pixelCount += 1;
+            }
+        }
+
+        telemetry.addData("PixCount",pixelCount);
+
+        width /= coarseness;
+        height /= coarseness;
+
+        int maxConsecNotBlue = 6;
+
+        int maxRadius = -1;
+        int maxX = -1, maxY = -1;
+
+        for (int i = 0; i < width; i += 2) {
+            for (int j = 0; j < height / 2.0; j += 2) {
+                int leftnBlue = 0, downnBlue = 0, rightnBlue = 0, upnBlue = 0;
+
+                if (pixels[i][j]) {
+                    int dev;
+                    for (dev = 1; dev < width; dev++) {
+                        if (i - dev >= 0 && !pixels[i - dev][j]) {
+                            leftnBlue++;
+                            if (leftnBlue > maxConsecNotBlue) break;
+                        } else {
+                            leftnBlue = 0;
+                        }
+
+                        if (i + dev < width && !pixels[i + dev][j]) {
+                            rightnBlue++;
+                            if (rightnBlue > maxConsecNotBlue) break;
+                        } else {
+                            rightnBlue = 0;
+                        }
+
+                        if (j - dev >= 0 && !pixels[i][j - dev]) {
+                            upnBlue++;
+                            if (upnBlue > maxConsecNotBlue) break;
+                        } else {
+                            upnBlue = 0;
+                        }
+
+                        if (j + dev < height && !pixels[i][j + dev]) {
+                            downnBlue++;
+                            if (downnBlue > maxConsecNotBlue) break;
+                        } else {
+                            downnBlue = 0;
+                        }
+                    }
+
+                    if (dev > maxRadius) {
+                        maxRadius = dev;
+                        maxX = i;
+                        maxY = j;
+                    }
+                }
+            }
+        }
+
+        ballPos[0] = maxX;
+        ballPos[1] = maxY;
+        ballPos[2] = maxRadius - maxConsecNotBlue;
+    }
+
+    private boolean isBlueLine(float[] pix) {
+        return (Math.abs((pix[0] / 256.) - 0.86) < 0.35) && (pix[1] > 0.4) && (pix[2] > 0.2);
+    }
+
+    private int processBlueLine() {
+        Image k = getPicture();
+
+        Bitmap bm = Bitmap.createBitmap(k.getHeight(), k.getWidth(), Bitmap.Config.RGB_565);
+
+        ByteBuffer an_ = k.getPixels();
+        bm.copyPixelsFromBuffer(an_);
+
+        int width = bm.getWidth();
+        int height = bm.getHeight();
+
+        int h_f = 200;
+
+        int consecCount = 0;
+
+        for (int l = h_f; l < height; l++) {
+            int count = 0;
+            float[] pix = new float[3];
+            for (int i = width / 2 - 15; i < width / 2 + 15; i++) {
+                Color.colorToHSV(bm.getPixel(i, l), pix);
+                if (isBlueLine(pix)) {
+                    count += 1;
+                    telemetry.addData("pix", pix[0]);
+                    telemetry.addData("pix", pix[1]);
+                    telemetry.addData("pix", pix[2]);
+                    telemetry.addData("l", l);
+                    telemetry.addData("i", i);
+                    telemetry.update();
+                    horse(251);
+                }
+            }
+            if (count > 12) {
+                return l - h_f;
+            }
+        }
+        return -1;
+    }
+
+    private boolean processBitmap() {
+        time = System.currentTimeMillis();
+        Bitmap b = null;
+        ByteBuffer l;
+
+        boolean valid = false;
+
+        int width = 0, height = 0;
+        while (!valid) {
+            Image k = getPicture();
+
+            if (k != null) {
+                if (b == null) {
+                    b = Bitmap.createBitmap(k.getHeight(), k.getWidth(), Bitmap.Config.RGB_565);
+                }
+
+                valid = true;
+
+                l = k.getPixels();
+                b.copyPixelsFromBuffer(l);
+
+                telemetry.addData("BufferHeight", k.getHeight());
+                telemetry.addData("BufferWidth", k.getWidth());
+
+                telemetry.addData("BitmapHeight", b.getHeight());
+                telemetry.addData("BitmapWidth", b.getWidth());
+
+                width = b.getWidth();
+                height = b.getHeight();
+
+                int[] bluePos = new int[3];
+                int[] redPos = new int[3];
+
+                processBlueBitmap(b, bluePos);
+                processRedBitmap(b, redPos);
+
+                telemetry.addData("Blue Height", bluePos[0]);
+                telemetry.addData("Red Height", redPos[0]);
+
+                telemetry.addData("totH", width / 4 * 0.35);
+
+                return (bluePos[0] > redPos[0]);
+            }
+        }
+
+        return true;
+    }
+
+    double clawClosedPosition = 0.15;
+    double clawIntermediatePosition = 0.32;
+    double clawOpenPosition = 1;
+
+    public void openClaw() {
+        robot.clawleft.setPosition(clawClosedPosition);
+        robot.clawright.setPosition(clawOpenPosition);
+    }
+
+    public void closeClaw() {
+        robot.clawleft.setPosition(clawOpenPosition);
+        robot.clawright.setPosition(clawClosedPosition);
+    }
+
+    public void intermediateClaw() {
+        robot.clawleft.setPosition(clawIntermediatePosition);
+        robot.clawright.setPosition(1 - clawIntermediatePosition);
+    }
+
+    TouchSensor touchSensor;
+    UltrasonicSensor ultra;
+
+    private void horse(long milli) {
+        sleep(milli);
+    }
+
+    static int cockLength = 31;
+
     @Override public void runOpMode() {
 
         /*
          * To start up Vuforia, tell it the view that we wish to use for camera monitor (on the RC phone);
          * If no camera monitor is desired, use the parameterless constructor instead (commented out below).
          */
+        touchSensor = hardwareMap.get(TouchSensor.class, "touch_sensor");
+        ultra = hardwareMap.ultrasonicSensor.get("ultra");
 
         robot.init(hardwareMap);
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
@@ -78,6 +408,8 @@ public class Blue2Auto extends LinearOpMode {
         robot.BLMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         robot.BRMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
+        //robot.urethra.setPosition(0.2);
+
         idle();
 
         robot.FLMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -94,9 +426,71 @@ public class Blue2Auto extends LinearOpMode {
                 robot.FRMotor.getCurrentPosition());
         telemetry.update();
 
+        openClaw();
+        robot.teat.setPosition(0);
+        robot.milk.setPosition(0);
+
+        setCameraDirection(-15);
+
+        horse(4000);
+        boolean p = processBitmap();
+        telemetry.update();
+
+        horse(2000);
+        telemetry.addData("System", "Ready!");
+        telemetry.update();
         waitForStart();
 
+        //robot.urethra.setPosition(0.75);
+        horse(300);
+        //robot.urethra.setPosition(0.75);
+
+        setCameraDirection(0); // move to crotch
+
+
         relicTrackables.activate();
+
+        openClaw();
+        robot.milk.setPosition(0.15);
+        horse(250);
+        robot.teat.setPosition(0.6);
+        //robot.urethra.setPosition(0.75);
+        horse(250);
+
+
+        robot.milk.setPosition(0.9);
+
+        horse(1000);
+
+        if (!p) {
+            robot.teat.setPosition(0);
+        } else {
+            robot.teat.setPosition(1);
+        }
+        //robot.urethra.setPosition(0.75);
+
+
+        robot.arm.setPower(-0.2); // up
+        horse(500);
+
+        robot.arm.setPower(0); // stop up
+
+        intermediateClaw(); // claw
+        horse(400);
+
+        robot.arm.setPower(0.2); // down
+        horse(900);
+
+        robot.arm.setPower(0);
+        closeClaw(); // claw
+        horse(400);
+
+        robot.arm.setPower(-0.5); // up
+        horse(3200);
+
+        //robot.urethra.setPosition(1);
+
+        robot.arm.setPower(0); // stop down
 
         while (opModeIsActive()) {
 
@@ -106,8 +500,17 @@ public class Blue2Auto extends LinearOpMode {
              * UNKNOWN, LEFT, CENTER, and RIGHT. When a VuMark is visible, something other than
              * UNKNOWN will be returned by {@link RelicRecoveryVuMark#from(VuforiaTrackable)}.
              */
+
+
+
             vuMark = RelicRecoveryVuMark.from(relicTemplate);
             if (vuMark != RelicRecoveryVuMark.UNKNOWN) {
+                horse(500);
+                robot.milk.setPosition(0);
+                horse(200);
+                robot.teat.setPosition(0);
+
+
 
                 /* Found an instance of the template. In the actual game, you will probably
                  * loop until this condition occurs, then move on to act accordingly depending
@@ -139,95 +542,193 @@ public class Blue2Auto extends LinearOpMode {
 
 
 
-//close the claw first thing after start
-                robot.clawleft.setPosition(0.5);
-                robot.clawright.setPosition(0);
-                robot.arm.setPower(-0.2);
-                sleep(500);
-                robot.arm.setPower(0);
-                //actual auto start
+                robot.milk.setPosition(0);
 
+                robot.FLMotor.setPower(-0.55);
+                robot.FRMotor.setPower(-0.31);
+                robot.BLMotor.setPower(-0.55);
+                robot.BRMotor.setPower(0.31);
 
-                if (vuMark == RelicRecoveryVuMark.RIGHT){
-                    encoderDrive(0.5,-15,-15,2.5);
-                    robot.SideMotor.setPower(1);
-                    sleep(1100);
-                    robot.SideMotor.setPower(0);
-                    encoderDrive(1, -5, -5, 0.5);
-                    sleep(100);
-                    //open claw
-                    robot.clawleft.setPosition(0);
-                    robot.clawright.setPosition(0.5);
-                    sleep(300);
-                    encoderDrive(0.2,10,10,2);
-                    robot.clawleft.setPosition(0.5);
-                    robot.clawright.setPosition(0);
-                    encoderDrive(0.5,-10,-10,2);
-                    //open claw
-                /*robot.clawleft.setPosition(0.1);
-                robot.clawright.setPosition(0.4);
-                sleep(300);
-                encoderDrive(0.5,5,5,5);//drive back
-                robot.SideMotor.setPower(0.5);//drive to the right
-                sleep(600);
-                robot.SideMotor.setPower(0);
-                encoderDrive(0.5,13,13,10);
-                encoderDrive(0.5, 9, -9, 5);//turn 90 degrees
-                */
-                    break;
+                setUrethra(90.0);
+                sleep(3000);
+
+                robot.FRMotor.setPower(-0.2);
+                robot.BRMotor.setPower(0.2);
+
+                robot.FLMotor.setPower(0.2);
+                robot.BLMotor.setPower(0.2);
+
+                sleep(2800);
+
+                robot.FLMotor.setPower(0);
+                robot.FRMotor.setPower(0);
+                robot.BLMotor.setPower(0);
+                robot.BRMotor.setPower(0);
+
+                // encoderDrive(0.8, 10, 10, 100);
+
+                double vis = 420.0;
+
+                setUrethra(90.0);
+
+                double oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw = 0.2158109824981071;
+
+                while (vis > 0) {
+                    vis = ultra.getUltrasonicLevel() - 23;
+                    robot.SideMotor.setPower(-vis/30);
+
+                        /*oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw *= 2.5;
+                        oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw += 0.03;
+                        oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw = oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw - Math.floor(oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw);
+                        robot.teat.setPosition(oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw / 2.0);
+                        */horse(100);
                 }
-                if (vuMark == RelicRecoveryVuMark.CENTER){
-                    encoderDrive(0.5,-15,-15,2.5);
-                    robot.SideMotor.setPower(1);
-                    sleep(720);
-                    robot.SideMotor.setPower(0);
-                    encoderDrive(1, -5, -5, 0.5);
-                    sleep(100);
-                    //open claw
-                    robot.clawleft.setPosition(0);
-                    robot.clawright.setPosition(0.5);
-                    sleep(300);
-                    encoderDrive(0.2,10,10,2);
-                    robot.clawleft.setPosition(0.5);
-                    robot.clawright.setPosition(0);
-                    encoderDrive(0.5,-10,-10,2);
 
-                /*
-                encoderDrive(0.5,5,5,5);//drive back
-                robot.SideMotor.setPower(0.5);//drive to the right
+                robot.SideMotor.setPower(0);
+
+                setUrethra(90.0);
                 sleep(500);
-                robot.SideMotor.setPower(0);
-                encoderDrive(0.5,15,15,10);
-                encoderDrive(0.5, 8.3, -8.3, 5);//turn 90 degrees
-                */
-                    break;
-                }
-                if (vuMark == RelicRecoveryVuMark.LEFT){
-                    encoderDrive(0.5,-15,-15,2.5);
-                    robot.SideMotor.setPower(1);
-                    sleep(280);
-                    robot.SideMotor.setPower(0);
-                    encoderDrive(1, -5, -5, 0.5);
-                    sleep(100);
-                    //open claw
-                    robot.clawleft.setPosition(0);
-                    robot.clawright.setPosition(0.5);
-                    sleep(300);
-                    encoderDrive(0.2,10,10,2);
-                    robot.clawleft.setPosition(0.5);
-                    robot.clawright.setPosition(0);
-                    encoderDrive(0.8,-10,-10,2);
 
-                /*
-                encoderDrive(0.5,5,5,5);//drive back
-                robot.SideMotor.setPower(0.5);//drive to the right
-                sleep(1400);
-                robot.SideMotor.setPower(0);
-                encoderDrive(0.5,15,15,10);
-                encoderDrive(0.5, 8.3, -8.3, 5);//turn 90 degrees
+                double dis = ultra.getUltrasonicLevel();
+
+                setUrethra(180.0);
+                sleep(500);
+
+                double fdis = ultra.getUltrasonicLevel();
+
+                vis = 69696969.0;
+
+                while (vis > 0) {
+                        /*oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw *= 2.5;
+                        oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw += 0.03;
+                        oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw = oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw - Math.floor(oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw);
+                        robot.teat.setPosition(oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw / 2.0);
+                        robot.milk.setPosition(oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw / 10);
 */
-                    break;
+                    vis = ultra.getUltrasonicLevel() - 14;
+                    robot.FLMotor.setPower(vis/30);
+                    robot.FRMotor.setPower(vis/50);
+                    robot.BLMotor.setPower(vis/30);
+                    robot.BRMotor.setPower(-vis/50);
+                    sleep(50);
                 }
+
+                robot.FRMotor.setPower(0);
+                robot.BRMotor.setPower(0);
+                robot.FLMotor.setPower(0);
+                robot.BLMotor.setPower(0);
+
+                robot.SideMotor.setPower(0);
+
+                double gdis = ultra.getUltrasonicLevel();
+
+                setUrethra(90.0);
+                sleep(500);
+
+                double dis_o = ultra.getUltrasonicLevel();
+
+                double ws = Math.atan2(dis - dis_o, fdis - gdis);
+                telemetry.addData("ws", ws);
+
+                telemetry.update();
+
+                vis = 12345.0;
+
+                int ass;
+
+                if (vuMark == RelicRecoveryVuMark.RIGHT) {
+                    ass = 46;
+                } else if (vuMark == RelicRecoveryVuMark.CENTER) {
+                    ass = 65;
+                } else {
+                    ass = 84;
+                }
+
+                ass += 23;
+
+                setUrethra(180.0);
+                sleep(500);
+
+                while (vis > 0) {
+                        /*oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw *= 2.5;
+                        oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw += 0.03;
+                        oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw = oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw - Math.floor(oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw);
+                        robot.teat.setPosition(oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw / 2.0);
+                        robot.milk.setPosition(oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw / 10);
+*/
+                    vis = ass - ultra.getUltrasonicLevel();
+
+                    robot.FLMotor.setPower(-vis/30);
+                    robot.FRMotor.setPower(-vis/50);
+                    robot.BLMotor.setPower(-vis/30);
+                    robot.BRMotor.setPower(vis/50);
+
+                    sleep(50);
+                }
+
+                robot.SideMotor.setPower(0);
+
+                robot.FRMotor.setPower(-0.2);
+                robot.BRMotor.setPower(0.2);
+
+                robot.FLMotor.setPower(0.2);
+                robot.BLMotor.setPower(0.2);
+
+                sleep((long)(ws * 750) + 2680);
+
+                robot.FRMotor.setPower(0);
+                robot.BRMotor.setPower(0);
+                robot.FLMotor.setPower(0);
+                robot.BLMotor.setPower(0);
+
+                robot.arm.setPower(0.5); // up
+                horse(1600);
+
+                robot.arm.setPower(0);
+
+                setUrethra(180);
+                sleep(250);
+
+                vis = 420.0;
+
+                robot.FLMotor.setPower(0.55);
+                robot.FRMotor.setPower(0.26);
+                robot.BLMotor.setPower(0.55);
+                robot.BRMotor.setPower(-0.26);
+
+                sleep(3000);
+
+                openClaw();
+
+                robot.FLMotor.setPower(-0.55);
+                robot.FRMotor.setPower(-0.26);
+                robot.BLMotor.setPower(-0.55);
+                robot.BRMotor.setPower(0.26);
+
+                sleep(1000);
+
+                closeClaw();
+
+                robot.FLMotor.setPower(0.55);
+                robot.FRMotor.setPower(0.26);
+                robot.BLMotor.setPower(0.55);
+                robot.BRMotor.setPower(-0.26);
+
+                sleep(2100);
+
+                robot.FLMotor.setPower(-0.55);
+                robot.FRMotor.setPower(-0.26);
+                robot.BLMotor.setPower(-0.55);
+                robot.BRMotor.setPower(0.26);
+
+                sleep(1000);
+
+                robot.FLMotor.setPower(0);
+                robot.FRMotor.setPower(0);
+                robot.BLMotor.setPower(0);
+                robot.BRMotor.setPower(0);
+
+                break;
             }
             else {
                 telemetry.addData("VuMark", "not visible");
@@ -235,6 +736,11 @@ public class Blue2Auto extends LinearOpMode {
 
             telemetry.update();
         }
+    }
+
+    public void setUrethra(double deg) {
+        robot.urethra.setPosition(deg / 180.0 * 0.629 + 0.01);
+        sleep(50);
     }
 
     String format(OpenGLMatrix transformationMatrix) {
@@ -259,12 +765,15 @@ public class Blue2Auto extends LinearOpMode {
         if (opModeIsActive()) {
 
             // Determine new target position, and pass to motor controller
-            newLeftTarget = robot.FLMotor.getCurrentPosition() + (int)(leftInches * COUNTS_PER_INCH);
-            newRightTarget = robot.FRMotor.getCurrentPosition() + (int)(rightInches * COUNTS_PER_INCH);
-            newLeftTarget = robot.BLMotor.getCurrentPosition() + (int)(leftInches * COUNTS_PER_INCH);
-            newRightTarget = robot.BRMotor.getCurrentPosition() + (int)(rightInches * COUNTS_PER_INCH);
+            newLeftTarget = robot.FLMotor.getCurrentPosition() - (int)(leftInches * COUNTS_PER_INCH);
+            newRightTarget = robot.FRMotor.getCurrentPosition() - (int)(rightInches * COUNTS_PER_INCH);
+
             robot.FLMotor.setTargetPosition(newLeftTarget);
             robot.FRMotor.setTargetPosition(newRightTarget);
+
+            newLeftTarget = robot.BLMotor.getCurrentPosition() - (int)(leftInches * COUNTS_PER_INCH);
+            newRightTarget = robot.BRMotor.getCurrentPosition() + (int)(rightInches * COUNTS_PER_INCH);
+
             robot.BLMotor.setTargetPosition(newLeftTarget);
             robot.BRMotor.setTargetPosition(newRightTarget);
 
@@ -276,10 +785,10 @@ public class Blue2Auto extends LinearOpMode {
 
             // reset the timeout time and start motion.
             runtime.reset();
-            robot.FLMotor.setPower(Math.abs(speed));
-            robot.FRMotor.setPower(Math.abs(speed*0.7));
-            robot.BLMotor.setPower(Math.abs(speed));
-            robot.BRMotor.setPower(Math.abs(speed*0.7));
+            robot.FLMotor.setPower(speed);
+            robot.FRMotor.setPower(speed*0.7);
+            robot.BLMotor.setPower(speed);
+            robot.BRMotor.setPower(speed*0.7);
 
             // keep looping while we are still active, and there is time left, and both motors are running.
             while (opModeIsActive() &&
@@ -307,7 +816,7 @@ public class Blue2Auto extends LinearOpMode {
             robot.FRMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             robot.BLMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             robot.BRMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            //  sleep(250);   // optional pause after each move
+            //  horse(250);   // optional pause after each move
         }
     }
 

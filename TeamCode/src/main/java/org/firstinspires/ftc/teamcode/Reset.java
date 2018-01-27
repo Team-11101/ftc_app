@@ -10,9 +10,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.hardware.UltrasonicSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.vuforia.Image;
-import com.vuforia.PIXEL_FORMAT;
-import com.vuforia.Vuforia;
+
 
 @Autonomous(name="ResetGay", group="Pushbot")
 public class Reset extends LinearOpMode  {
@@ -21,6 +19,7 @@ public class Reset extends LinearOpMode  {
     @Override
     public void runOpMode() {
         robot.init(hardwareMap);
+
 
         robot.teat.setPosition(0);
         robot.arm.setPower(-0.5);
