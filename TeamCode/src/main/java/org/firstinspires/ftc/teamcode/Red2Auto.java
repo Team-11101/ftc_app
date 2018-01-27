@@ -542,18 +542,25 @@ public class Red2Auto extends LinearOpMode {
 
 
                 if (vuMark == RelicRecoveryVuMark.RIGHT){
-                    robot.urethra.setPosition(1);
-                    robot.FLMotor.setPower(0.9);
-                    robot.FRMotor.setPower(0.7);
-                    robot.BLMotor.setPower(0.9);
-                    robot.BRMotor.setPower(-0.7);
+                    robot.milk.setPosition(0);
 
-                    horse(1700);
+                    robot.FLMotor.setPower(0.55);
+                    robot.FRMotor.setPower(0.31);
+                    robot.BLMotor.setPower(0.55);
+                    robot.BRMotor.setPower(-0.31);
+
+                    sleep(1800);
+
+                    double vis = 420.0;
+
                     double oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw = 0.2158109824981071;
 
-                    while (ultra.getUltrasonicLevel() > cockLength) {
-                        telemetry.addData("dis", ultra.getUltrasonicLevel());
-                        telemetry.update();
+                    while (vis > 0) {
+                        vis = ultra.getUltrasonicLevel() - 31;
+                        robot.FLMotor.setPower(vis/30);
+                        robot.FRMotor.setPower(vis/50);
+                        robot.BLMotor.setPower(vis/30);
+                        robot.BRMotor.setPower(-vis/50);
 
                         oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw *= 2.5;
                         oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw += 0.03;
@@ -562,110 +569,138 @@ public class Red2Auto extends LinearOpMode {
                         horse(100);
                     }
 
-                    telemetry.addData("dis", ultra.getUltrasonicLevel());
+                    robot.FLMotor.setPower(0);
+                    robot.FRMotor.setPower(0);
+                    robot.BLMotor.setPower(0);
+                    robot.BRMotor.setPower(0);
+
+                    setUrethra(180.0);
+                    sleep(500);
+
+                    double dis = ultra.getUltrasonicLevel();
+
+                    setUrethra(90.0);
+                    sleep(500);
+
+                    double fdis = ultra.getUltrasonicLevel();
+
+                    vis = 69696969.0;
+
+                    while (vis > 0) {
+                        oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw *= 2.5;
+                        oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw += 0.03;
+                        oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw = oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw - Math.floor(oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw);
+                        robot.teat.setPosition(oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw / 2.0);
+                        robot.milk.setPosition(oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw / 10);
+
+                        vis = ultra.getUltrasonicLevel() - 20;
+                        robot.SideMotor.setPower(-vis / 10);
+                        sleep(50);
+                    }
+
+                    robot.SideMotor.setPower(0);
+
+                    double gdis = ultra.getUltrasonicLevel();
+
+                    setUrethra(180.0);
+                    sleep(500);
+
+                    double dis_o = ultra.getUltrasonicLevel();
+
+                    double ws = Math.atan2(dis - dis_o, fdis - gdis);
+                    telemetry.addData("ws", ws);
+
                     telemetry.update();
+                    setUrethra(90.0);
 
-                    robot.FLMotor.setPower(0);
-                    robot.FRMotor.setPower(0);
-                    robot.BLMotor.setPower(0);
-                    robot.BRMotor.setPower(0);
+                    sleep(1000);
 
-                    double udd = ultra.getUltrasonicLevel();
+                    vis = 12345.0;
 
-                    robot.SideMotor.setPower(-0.5);
-
-                    horse(1000);
-                    robot.SideMotor.setPower(0);
-
-                    double diff = ultra.getUltrasonicLevel() - udd;
-                    robot.SideMotor.setPower(0.5);
-                    horse(135);
-                    robot.SideMotor.setPower(0);
-
-                    robot.FLMotor.setPower(0.1);
-                    robot.FRMotor.setPower(-0.1);
-                    robot.BLMotor.setPower(0.1);
-                    robot.BRMotor.setPower(0.1);
-
-                    horse(Math.abs((long)(diff * 120)));
-
-                    robot.FLMotor.setPower(0);
-                    robot.FRMotor.setPower(0);
-                    robot.BLMotor.setPower(0);
-                    robot.BRMotor.setPower(0);
-
-                    robot.SideMotor.setPower(.2);
-                    for (int ass = 0; ass < 20; ass++) {
+                    while (vis > 0) {
                         oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw *= 2.5;
                         oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw += 0.03;
                         oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw = oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw - Math.floor(oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw);
                         robot.teat.setPosition(oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw / 2.0);
                         robot.milk.setPosition(oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw / 10);
 
-                        //robot.urethra.setPosition(1 - oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw / 10);
-
-                        double newPower = Math.max(Math.min((ultra.getUltrasonicLevel() - cockLength) / 5, 1), -1) / 10;
-                        if (Math.abs(newPower) < 4 / 10.0) {
-                            newPower = 0;
-                        }
-
-                        robot.FLMotor.setPower(newPower);
-                        robot.FRMotor.setPower(newPower);
-                        robot.BLMotor.setPower(newPower);
-                        robot.BRMotor.setPower(-newPower);
-
-                        horse(100);
+                        vis = 46 - ultra.getUltrasonicLevel();
+                        robot.SideMotor.setPower(vis / 10);
+                        sleep(50);
                     }
 
-                    robot.SideMotor.setPower(-.2);
-                    long time = System.currentTimeMillis();
+                    robot.SideMotor.setPower(0);
 
-                    while (!touchSensor.isPressed()) {
-                        oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw *= 2.5;
-                        oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw += 0.03;
-                        oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw = oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw - Math.floor(oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw);
-                        robot.teat.setPosition(oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw / 2.0);
-                        robot.milk.setPosition(oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw / 10);
+                    robot.FRMotor.setPower(Math.signum(ws)*-0.2);
+                    robot.BRMotor.setPower(Math.signum(ws)*0.2);
 
-                        //robot.urethra.setPosition(1 - oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw / 10);
+                    robot.FLMotor.setPower(Math.signum(ws)*0.2);
+                    robot.BLMotor.setPower(Math.signum(ws)*0.2);
 
-                        double newPower = Math.max(Math.min((ultra.getUltrasonicLevel() - cockLength) / 5, 1), -1) / 10;
-                        if (Math.abs(newPower) < 4 / 10.0) {
-                            newPower = 0;
-                        }
+                    sleep((long)(Math.abs(ws) * 1500));
 
-                        robot.FLMotor.setPower(newPower);
-                        robot.FRMotor.setPower(newPower);
-                        robot.BLMotor.setPower(newPower);
-                        robot.BRMotor.setPower(-newPower);
+                    robot.FRMotor.setPower(0);
+                    robot.BRMotor.setPower(0);
+                    robot.FLMotor.setPower(0);
+                    robot.BLMotor.setPower(0);
 
-                        horse(100);
+                    robot.arm.setPower(0.5); // up
+                    horse(1600);
 
+                    robot.arm.setPower(0);
 
-                    }
+                    setUrethra(180);
+                    sleep(250);
+
+                    vis = 420.0;
+
+                    robot.FLMotor.setPower(0.55);
+                    robot.FRMotor.setPower(0.26);
+                    robot.BLMotor.setPower(0.55);
+                    robot.BRMotor.setPower(-0.26);
+
+                    sleep(4000);
+
+                    openClaw();
+
+                    robot.FLMotor.setPower(-0.55);
+                    robot.FRMotor.setPower(-0.26);
+                    robot.BLMotor.setPower(-0.55);
+                    robot.BRMotor.setPower(0.26);
+
+                    sleep(1000);
+
+                    closeClaw();
+
+                    robot.FLMotor.setPower(0.55);
+                    robot.FRMotor.setPower(0.26);
+                    robot.BLMotor.setPower(0.55);
+                    robot.BRMotor.setPower(-0.26);
+
+                    sleep(2100);
+
+                    robot.FLMotor.setPower(-0.55);
+                    robot.FRMotor.setPower(-0.26);
+                    robot.BLMotor.setPower(-0.55);
+                    robot.BRMotor.setPower(0.26);
+
+                    sleep(1000);
 
                     robot.FLMotor.setPower(0);
                     robot.FRMotor.setPower(0);
                     robot.BLMotor.setPower(0);
                     robot.BRMotor.setPower(0);
 
-                    robot.SideMotor.setPower(0);
+                    while (true) {
+                        oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw *= 2.5;
+                        oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw += 0.03;
+                        oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw = oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw - Math.floor(oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw);
+                        robot.teat.setPosition(oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw / 2.0);
+                        robot.milk.setPosition(oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw / 10);
+                        robot.urethra.setPosition(oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw);
 
-
-                    /*while (!touchSensor.isPressed())
-                    {
-                        vis = ultra.getUltrasonicLevel() - 12;
-                        robot.SideMotor.setPower(vis/10);
-                        if (touchSensor.isPressed()){
-                            robot.SideMotor.setPower(0);
-                        }
-                    }*/
-                    /*while (vis > 0) {
-                        robot.SideMotor.setPower(-(vis/10));
+                        sleep(200);
                     }
-                    robot.SideMotor.setPower(0);
-                    break;*/
-                    break;
                 }
                 if (vuMark == RelicRecoveryVuMark.CENTER){
 
@@ -680,6 +715,11 @@ public class Red2Auto extends LinearOpMode {
 
             telemetry.update();
         }
+    }
+
+    public void setUrethra(double deg) {
+        robot.urethra.setPosition(deg / 180.0 * 0.629 + 0.01);
+        sleep(50);
     }
 
     String format(OpenGLMatrix transformationMatrix) {
