@@ -130,7 +130,7 @@ public class TimDrive extends LinearOpMode {
 
 
     public void moveDirection(double x, double y) {
-        double correc = 0.76;
+        double correc = 0.67;
         robot.BLMotor.setPower(-y);
         robot.FLMotor.setPower(-y);
         robot.FRMotor.setPower(-correc*y);

@@ -377,6 +377,21 @@ public class Blue2Auto extends LinearOpMode {
 
     static int cockLength = 31;
 
+    public void stopMove() {
+        moveDirection(0,0);
+    }
+
+    public void moveDirection(double x, double y) {
+
+        double correc = (Math.abs(y) < 0.67 / 2.0) ? 2 / 0.166 * Math.abs(y) * Math.abs(y) : 0.67;
+        robot.BLMotor.setPower(-y);
+        robot.FLMotor.setPower(-y);
+        robot.FRMotor.setPower(-correc*y);
+        robot.BRMotor.setPower(correc*y);
+
+        robot.SideMotor.setPower(-x);
+    }
+
     @Override public void runOpMode() {
 
         /*
@@ -544,13 +559,11 @@ public class Blue2Auto extends LinearOpMode {
 
                 robot.milk.setPosition(0);
 
-                robot.FLMotor.setPower(-0.55);
-                robot.FRMotor.setPower(-0.31);
-                robot.BLMotor.setPower(-0.55);
-                robot.BRMotor.setPower(0.31);
+                sleep(500);
+                moveDirection(0, 0.45);
 
                 setUrethra(90.0);
-                sleep(3000);
+                sleep(3400);
 
                 robot.FRMotor.setPower(-0.2);
                 robot.BRMotor.setPower(0.2);
@@ -558,12 +571,9 @@ public class Blue2Auto extends LinearOpMode {
                 robot.FLMotor.setPower(0.2);
                 robot.BLMotor.setPower(0.2);
 
-                sleep(2800);
+                sleep(2400);
 
-                robot.FLMotor.setPower(0);
-                robot.FRMotor.setPower(0);
-                robot.BLMotor.setPower(0);
-                robot.BRMotor.setPower(0);
+                stopMove();
 
                 // encoderDrive(0.8, 10, 10, 100);
 
@@ -574,17 +584,17 @@ public class Blue2Auto extends LinearOpMode {
                 double oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw = 0.2158109824981071;
 
                 while (vis > 0) {
-                    vis = ultra.getUltrasonicLevel() - 23;
-                    robot.SideMotor.setPower(-vis/30);
+                    vis = ultra.getUltrasonicLevel() - 34;
+                    robot.SideMotor.setPower(-vis / 16);
 
                         /*oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw *= 2.5;
-                        oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw += 0.03;
+                        oneDayTheUdderManSag tywTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw += 0.03;
                         oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw = oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw - Math.floor(oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw);
                         robot.teat.setPosition(oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw / 2.0);
                         */horse(100);
                 }
 
-                robot.SideMotor.setPower(0);
+                stopMove();
 
                 setUrethra(90.0);
                 sleep(500);
@@ -605,20 +615,13 @@ public class Blue2Auto extends LinearOpMode {
                         robot.teat.setPosition(oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw / 2.0);
                         robot.milk.setPosition(oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw / 10);
 */
-                    vis = ultra.getUltrasonicLevel() - 14;
-                    robot.FLMotor.setPower(vis/30);
-                    robot.FRMotor.setPower(vis/50);
-                    robot.BLMotor.setPower(vis/30);
-                    robot.BRMotor.setPower(-vis/50);
+                    vis = ultra.getUltrasonicLevel() - 23;
+
+                    moveDirection(0, (vis > 0) ? -0.5 : 0);
                     sleep(50);
                 }
 
-                robot.FRMotor.setPower(0);
-                robot.BRMotor.setPower(0);
-                robot.FLMotor.setPower(0);
-                robot.BLMotor.setPower(0);
-
-                robot.SideMotor.setPower(0);
+                stopMove();
 
                 double gdis = ultra.getUltrasonicLevel();
 
@@ -637,14 +640,14 @@ public class Blue2Auto extends LinearOpMode {
                 int ass;
 
                 if (vuMark == RelicRecoveryVuMark.RIGHT) {
-                    ass = 46;
+                    ass = 87;
                 } else if (vuMark == RelicRecoveryVuMark.CENTER) {
-                    ass = 65;
+                    ass = 68;
                 } else {
-                    ass = 84;
+                    ass = 49;
                 }
 
-                ass += 23;
+                ass += 17;
 
                 setUrethra(180.0);
                 sleep(500);
@@ -658,14 +661,18 @@ public class Blue2Auto extends LinearOpMode {
 */
                     vis = ass - ultra.getUltrasonicLevel();
 
-                    robot.FLMotor.setPower(-vis/30);
-                    robot.FRMotor.setPower(-vis/50);
-                    robot.BLMotor.setPower(-vis/30);
-                    robot.BRMotor.setPower(vis/50);
+                    moveDirection(0, (vis / 15 > 0.5) ? (vis / 15) : 0);
+                    if (vis / 15 < 0.5) {
+                        break;
+                    }
 
                     sleep(50);
                 }
 
+                stopMove();
+
+                robot.SideMotor.setPower(-0.5);
+                sleep(300);
                 robot.SideMotor.setPower(0);
 
                 robot.FRMotor.setPower(-0.2);
@@ -676,10 +683,7 @@ public class Blue2Auto extends LinearOpMode {
 
                 sleep((long)(ws * 750) + 2680);
 
-                robot.FRMotor.setPower(0);
-                robot.BRMotor.setPower(0);
-                robot.FLMotor.setPower(0);
-                robot.BLMotor.setPower(0);
+                stopMove();
 
                 robot.arm.setPower(0.5); // up
                 horse(1600);

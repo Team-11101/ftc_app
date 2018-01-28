@@ -91,10 +91,7 @@ public class HardwareDRive
         //GreenMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         //BlueMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        FLMotor.setDirection(DcMotor.Direction.REVERSE);
-        BLMotor.setDirection(DcMotor.Direction.REVERSE);
         FRMotor.setDirection(DcMotor.Direction.REVERSE);
-        BRMotor.setDirection(DcMotor.Direction.REVERSE);
 
     }
 
