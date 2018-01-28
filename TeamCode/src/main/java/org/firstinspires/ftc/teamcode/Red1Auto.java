@@ -198,6 +198,17 @@ public class Red1Auto extends LinearOpMode {
         return vuMark;
     }
 
+    public void moveDirection(double x, double y) {
+
+        double correc = (Math.abs(y) < 0.67 / 2.0) ? 2 / 0.166 * Math.abs(y) * Math.abs(y) : 0.67;
+        robot.BLMotor.setPower(-y);
+        robot.FLMotor.setPower(-y);
+        robot.FRMotor.setPower(-correc*y);
+        robot.BRMotor.setPower(correc*y);
+
+        robot.SideMotor.setPower(-x);
+    }
+
 
     public void encoderDrive(double speed,
                              double leftInches, double rightInches,

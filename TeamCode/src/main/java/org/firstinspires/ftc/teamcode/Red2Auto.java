@@ -433,13 +433,15 @@ public class Red2Auto extends LinearOpMode {
         setCameraDirection(-75);
 
         horse(4000);
+
+        waitForStart();
+
         boolean p = processBitmap();
         telemetry.update();
 
-        horse(2000);
         telemetry.addData("System", "Ready!");
         telemetry.update();
-        waitForStart();
+
 
         //robot.urethra.setPosition(0.75);
         horse(300);
@@ -492,6 +494,8 @@ public class Red2Auto extends LinearOpMode {
 
         robot.arm.setPower(0); // stop down
 
+        long time = System.currentTimeMillis();
+
         while (opModeIsActive()) {
 
             /**
@@ -504,7 +508,7 @@ public class Red2Auto extends LinearOpMode {
 
 
             vuMark = RelicRecoveryVuMark.from(relicTemplate);
-            if (vuMark != RelicRecoveryVuMark.UNKNOWN) {
+            if (vuMark != RelicRecoveryVuMark.UNKNOWN || System.currentTimeMillis() > time + 5500) {
                 horse(500);
                 robot.milk.setPosition(0);
                 horse(200);
@@ -617,7 +621,7 @@ public class Red2Auto extends LinearOpMode {
 
                     vis = 12345.0;
 
-                    int ass;
+                    int ass = 46;
 
                     if (vuMark == RelicRecoveryVuMark.RIGHT) {
                         ass = 46;
@@ -626,6 +630,8 @@ public class Red2Auto extends LinearOpMode {
                     } else {
                         ass = 84;
                     }
+
+                    ass -= 3;
 
                     while (vis > 0) {
                         /*oneDayTheUdderManSawTheCowAndThusMIlkedItVoraciouslyMilkingItUntilItsTeatsWereRaw *= 2.5;
@@ -664,42 +670,27 @@ public class Red2Auto extends LinearOpMode {
 
                     vis = 420.0;
 
-                    robot.FLMotor.setPower(0.55);
-                    robot.FRMotor.setPower(0.26);
-                    robot.BLMotor.setPower(0.55);
-                    robot.BRMotor.setPower(-0.26);
+                moveDirection(0, -1);
 
-                    sleep(4000);
+                sleep(1000);
 
-                    openClaw();
+                openClaw();
 
-                    robot.FLMotor.setPower(-0.55);
-                    robot.FRMotor.setPower(-0.26);
-                    robot.BLMotor.setPower(-0.55);
-                    robot.BRMotor.setPower(0.26);
+                moveDirection(0, 1);
 
-                    sleep(1000);
+                sleep(500);
 
-                    closeClaw();
+                closeClaw();
 
-                    robot.FLMotor.setPower(0.55);
-                    robot.FRMotor.setPower(0.26);
-                    robot.BLMotor.setPower(0.55);
-                    robot.BRMotor.setPower(-0.26);
+                moveDirection(0, -1);
 
-                    sleep(2100);
+                sleep(1000);
 
-                    robot.FLMotor.setPower(-0.55);
-                    robot.FRMotor.setPower(-0.26);
-                    robot.BLMotor.setPower(-0.55);
-                    robot.BRMotor.setPower(0.26);
+                moveDirection(0, 1);
 
-                    sleep(1000);
+                sleep(750);
 
-                    robot.FLMotor.setPower(0);
-                    robot.FRMotor.setPower(0);
-                    robot.BLMotor.setPower(0);
-                    robot.BRMotor.setPower(0);
+                stopMove();
 
                 break;
             }
@@ -709,6 +700,21 @@ public class Red2Auto extends LinearOpMode {
 
             telemetry.update();
         }
+    }
+
+    public void stopMove() {
+        moveDirection(0,0);
+    }
+
+    public void moveDirection(double x, double y) {
+
+        double correc = (Math.abs(y) < 0.67 / 2.0) ? 2 / 0.166 * Math.abs(y) * Math.abs(y) : 0.67;
+        robot.BLMotor.setPower(-y);
+        robot.FLMotor.setPower(-y);
+        robot.FRMotor.setPower(-correc*y);
+        robot.BRMotor.setPower(correc*y);
+
+        robot.SideMotor.setPower(-x);
     }
 
     public void setUrethra(double deg) {

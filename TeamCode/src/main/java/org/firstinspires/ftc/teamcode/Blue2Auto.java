@@ -447,20 +447,20 @@ public class Blue2Auto extends LinearOpMode {
 
         setCameraDirection(-15);
 
-        horse(4000);
+
+        waitForStart();
+
         boolean p = processBitmap();
         telemetry.update();
 
-        horse(2000);
         telemetry.addData("System", "Ready!");
         telemetry.update();
-        waitForStart();
 
         //robot.urethra.setPosition(0.75);
         horse(300);
         //robot.urethra.setPosition(0.75);
 
-        setCameraDirection(0); // move to crotch
+        setCameraDirection(30); // move to crotch
 
 
         relicTrackables.activate();

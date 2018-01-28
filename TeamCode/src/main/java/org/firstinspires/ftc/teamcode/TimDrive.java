@@ -253,6 +253,8 @@ public class TimDrive extends LinearOpMode {
         // Wait for driver to press play
         waitForStart();
 
+
+
         boolean lastLeftBumper = false;
         boolean lastRightBumper = false;
 
@@ -283,6 +285,12 @@ public class TimDrive extends LinearOpMode {
                 settings.set("arm-modifier", 5);
             } else {
                 settings.set("arm-modifier", 25);
+            }
+
+            if (gamepad1.dpad_left) {
+                robot.teat.setPosition(0);
+                sleep(400);
+                robot.milk.setPosition(0);
             }
 
             updateArm();
