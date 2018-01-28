@@ -468,14 +468,14 @@ public class Blue2Auto extends LinearOpMode {
         openClaw();
         robot.milk.setPosition(0.15);
         horse(250);
-        robot.teat.setPosition(0.6);
+        robot.teat.setPosition(0.67);
         //robot.urethra.setPosition(0.75);
         horse(250);
 
 
         robot.milk.setPosition(0.9);
 
-        horse(1000);
+        horse(700);
 
         if (!p) {
             robot.teat.setPosition(0);
@@ -501,7 +501,7 @@ public class Blue2Auto extends LinearOpMode {
         horse(400);
 
         robot.arm.setPower(-0.5); // up
-        horse(3200);
+        horse(2600);
 
         //robot.urethra.setPosition(1);
 
@@ -559,11 +559,15 @@ public class Blue2Auto extends LinearOpMode {
 
                 robot.milk.setPosition(0);
 
-                sleep(500);
-                moveDirection(0, 0.45);
+                sleep(800);
+                moveDirection(0, 0.5);
+
+                sleep(1200);
+
+                moveDirection(0, 1);
 
                 setUrethra(90.0);
-                sleep(3400);
+                sleep(500);
 
                 robot.FRMotor.setPower(-0.2);
                 robot.BRMotor.setPower(0.2);
@@ -641,8 +645,11 @@ public class Blue2Auto extends LinearOpMode {
 
                 if (vuMark == RelicRecoveryVuMark.RIGHT) {
                     ass = 87;
+                    robot.SideMotor.setPower(1);
+                    sleep(300);
+                    robot.SideMotor.setPower(0);
                 } else if (vuMark == RelicRecoveryVuMark.CENTER) {
-                    ass = 68;
+                    ass = 67;
                 } else {
                     ass = 49;
                 }
@@ -671,7 +678,7 @@ public class Blue2Auto extends LinearOpMode {
 
                 stopMove();
 
-                robot.SideMotor.setPower(-0.5);
+                robot.SideMotor.setPower(-1);
                 sleep(300);
                 robot.SideMotor.setPower(0);
 
@@ -681,7 +688,7 @@ public class Blue2Auto extends LinearOpMode {
                 robot.FLMotor.setPower(0.2);
                 robot.BLMotor.setPower(0.2);
 
-                sleep((long)(ws * 750) + 2680);
+                sleep((long)(ws * 750) + 2700);
 
                 stopMove();
 
@@ -695,42 +702,27 @@ public class Blue2Auto extends LinearOpMode {
 
                 vis = 420.0;
 
-                robot.FLMotor.setPower(0.55);
-                robot.FRMotor.setPower(0.26);
-                robot.BLMotor.setPower(0.55);
-                robot.BRMotor.setPower(-0.26);
+                moveDirection(0, -1);
 
-                sleep(3000);
+                sleep(1000);
 
                 openClaw();
 
-                robot.FLMotor.setPower(-0.55);
-                robot.FRMotor.setPower(-0.26);
-                robot.BLMotor.setPower(-0.55);
-                robot.BRMotor.setPower(0.26);
+                moveDirection(0, 1);
 
-                sleep(1000);
+                sleep(500);
 
                 closeClaw();
 
-                robot.FLMotor.setPower(0.55);
-                robot.FRMotor.setPower(0.26);
-                robot.BLMotor.setPower(0.55);
-                robot.BRMotor.setPower(-0.26);
-
-                sleep(2100);
-
-                robot.FLMotor.setPower(-0.55);
-                robot.FRMotor.setPower(-0.26);
-                robot.BLMotor.setPower(-0.55);
-                robot.BRMotor.setPower(0.26);
+                moveDirection(0, -1);
 
                 sleep(1000);
 
-                robot.FLMotor.setPower(0);
-                robot.FRMotor.setPower(0);
-                robot.BLMotor.setPower(0);
-                robot.BRMotor.setPower(0);
+                moveDirection(0, 1);
+
+                sleep(500);
+
+                stopMove();
 
                 break;
             }
